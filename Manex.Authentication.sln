@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Manex.Authentication", "Manex.Authentication\Manex.Authentication.csproj", "{C01B1276-75C7-43B8-B98E-48F4FF9B8EE5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApplication2", "WebApplication2\WebApplication2.csproj", "{99C89F3F-1D13-4F61-B1E4-6ACC84E890D9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C01B1276-75C7-43B8-B98E-48F4FF9B8EE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C01B1276-75C7-43B8-B98E-48F4FF9B8EE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C01B1276-75C7-43B8-B98E-48F4FF9B8EE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C01B1276-75C7-43B8-B98E-48F4FF9B8EE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99C89F3F-1D13-4F61-B1E4-6ACC84E890D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99C89F3F-1D13-4F61-B1E4-6ACC84E890D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99C89F3F-1D13-4F61-B1E4-6ACC84E890D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99C89F3F-1D13-4F61-B1E4-6ACC84E890D9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
