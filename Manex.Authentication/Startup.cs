@@ -37,8 +37,9 @@ namespace Manex.Authentication {
 
             var siteSettings = services.GetSiteSettings();
 
-            services.AddRequiredEfInternalServices(
-                                                   siteSettings); // It's added to access services from the dbcontext, remove it if you are using the normal `AddDbContext` and normal constructor dependency injection.
+            // It's added to access services from the dbcontext, remove it if you are using the
+            // normal `AddDbContext` and normal constructor dependency injection.
+            services.AddRequiredEfInternalServices(siteSettings);
 
             services.AddIdentityServer(options => {
                          options.Events.RaiseErrorEvents       = true;
@@ -62,9 +63,9 @@ namespace Manex.Authentication {
             services.AddDbContextPool<ApplicationDbContext>((serviceProvider, optionsBuilder) => {
                 optionsBuilder.SetDbContextOptions(siteSettings);
 
-                optionsBuilder
-                   .UseInternalServiceProvider(
-                                               serviceProvider); // It's added to access services from the dbcontext, remove it if you are using the normal `AddDbContext` and normal constructor dependency injection.
+                // It's added to access services from the dbcontext, remove it if you are using the
+                // normal `AddDbContext` and normal constructor dependency injection.
+                optionsBuilder.UseInternalServiceProvider(serviceProvider); 
             });
 
             services.AddMvc(options => {
