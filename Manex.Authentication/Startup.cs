@@ -32,57 +32,59 @@ namespace Manex.Authentication
             services.AddCustomIdentityServices();
 
             var siteSettings = services.GetSiteSettings();
-            services.AddRequiredEfInternalServices(siteSettings); // It's added to access services from the dbcontext, remove it if you are using the normal `AddDbContext` and normal constructor dependency injection.
+            services.AddRequiredEfInternalServices(
+                siteSettings); // It's added to access services from the dbcontext, remove it if you are using the normal `AddDbContext` and normal constructor dependency injection.
 
             services.AddIdentityServer(options =>
-            {
-                options.Events.RaiseErrorEvents = true;
-                options.Events.RaiseInformationEvents = true;
-                options.Events.RaiseFailureEvents = true;
-                options.Events.RaiseSuccessEvents = true;
-            })
-        .AddDeveloperSigningCredential()
-        .AddInMemoryApiResources(new List<ApiResource>()
-        {
-                                    new ApiResource("api.sample", "Sample API")
-        })
-        .AddInMemoryClients(new List<Client>()
-        {
-                                    new Client
-                                    {
-                                        ClientId = "Authentication",
-                                        ClientSecrets =
-                                        {
-                                            new Secret("clientsecret".Sha256())
-                                        },
-                                        AllowedGrantTypes = { "authentication" },
-                                        AllowedScopes =
-                                        {
-                                            "api.sample"
-                                        },
-                                        AllowOfflineAccess = true
-                                    }
-        }).AddExtensionGrantValidator<AuthenticationGrant>();
+                {
+                    options.Events.RaiseErrorEvents = true;
+                    options.Events.RaiseInformationEvents = true;
+                    options.Events.RaiseFailureEvents = true;
+                    options.Events.RaiseSuccessEvents = true;
+                })
+                .AddDeveloperSigningCredential()
+                .AddInMemoryApiResources(new List<ApiResource>()
+                {
+                    new ApiResource("api.sample", "Sample API")
+                })
+                .AddInMemoryClients(new List<Client>()
+                {
+                    new Client
+                    {
+                        ClientId = "Authentication",
+                        ClientSecrets =
+                        {
+                            new Secret("clientsecret".Sha256())
+                        },
+                        AllowedGrantTypes = {"authentication"},
+                        AllowedScopes =
+                        {
+                            "api.sample"
+                        },
+                        AllowOfflineAccess = true
+                    }
+                }).AddExtensionGrantValidator<AuthenticationGrant>();
 
 
             services.AddDbContextPool<ApplicationDbContext>((serviceProvider, optionsBuilder) =>
             {
                 optionsBuilder.SetDbContextOptions(siteSettings);
-                optionsBuilder.UseInternalServiceProvider(serviceProvider); // It's added to access services from the dbcontext, remove it if you are using the normal `AddDbContext` and normal constructor dependency injection.
+                optionsBuilder
+                    .UseInternalServiceProvider(
+                        serviceProvider); // It's added to access services from the dbcontext, remove it if you are using the normal `AddDbContext` and normal constructor dependency injection.
             });
 
             services.AddMvc(options =>
-            {
-                options.UseYeKeModelBinder();
-                options.AllowEmptyInputInBodyModelBinding = true;
-                // options.Filters.Add(new NoBrowserCacheAttribute());
-            }).AddJsonOptions(jsonOptions =>
-            {
-                jsonOptions.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
-            })
-            .AddControllersAsServices()
-            .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
+                {
+                    options.UseYeKeModelBinder();
+                    options.AllowEmptyInputInBodyModelBinding = true;
+                    // options.Filters.Add(new NoBrowserCacheAttribute());
+                }).AddJsonOptions(jsonOptions =>
+                {
+                    jsonOptions.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+                })
+                .AddControllersAsServices()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
 
             services.AddSwaggerGen(x =>
@@ -94,7 +96,6 @@ namespace Manex.Authentication
                 });
 
                 x.DocInclusionPredicate((docName, description) => true);
-
             });
 
 
@@ -113,17 +114,14 @@ namespace Manex.Authentication
             app.UseIdentityServer();
 
 
-
             // app.UseNoBrowserCache();
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>
 
             {
-
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Manex API V1");
                 //                c.RoutePrefix = string.Empty;
-
             });
 
             app.UseMvc(routes =>
@@ -138,6 +136,4 @@ namespace Manex.Authentication
             });
         }
     }
-
-
 }
