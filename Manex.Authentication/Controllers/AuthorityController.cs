@@ -1,4 +1,5 @@
-﻿using Manex.Authentication.Contracts.Identity;
+﻿using System;
+using Manex.Authentication.Contracts.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -6,6 +7,8 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
+using Manex.Authentication.Entities.Identity;
 using Microsoft.Extensions.Configuration;
 using WebIddentityServer4.Authorities;
 using WebIddentityServer4.Helpers;
@@ -25,10 +28,14 @@ namespace Manex.Authentication.Controllers
     [Route("api/[controller]")]
     public class AuthorityController : Controller
     {
+        private readonly IApplicationUserManager _applicationUserManager;
         private Dictionary<string, AuthorityIssuer> _issuers;
 
-        public AuthorityController(IApplicationUserManager applicationUserManager,IApplicationSignInManager applicationSignInManager,ILogger<AuthorityController> logger,IConfiguration configuration)
+        public AuthorityController(IApplicationUserManager applicationUserManager,
+            IApplicationSignInManager applicationSignInManager,
+            ILogger<AuthorityController> logger,IConfiguration configuration)
         {
+            _applicationUserManager = applicationUserManager;
 
             _issuers = new Dictionary<string, AuthorityIssuer>()
             {
@@ -88,6 +95,33 @@ namespace Manex.Authentication.Controllers
 
             return Unauthorized();
 
+        }
+
+
+        [HttpGet("Register")]
+        public async Task<IActionResult> Register()
+        {
+            try
+            {
+
+            
+            var res = await _applicationUserManager.CreateAsync(new User()
+            {
+                FirstName = "alireza1",
+                LastName = "kazem1",
+                BirthDate = DateTimeOffset.Now,
+                PhoneNumber = "9112252072",
+                Email = "lrz.kazem1@yahoo.com",
+                UserName = "9112252072",
+                IsActive = true
+            });
+            return Ok(res);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            return Ok();
         }
 
 
