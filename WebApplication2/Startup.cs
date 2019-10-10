@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -30,7 +30,7 @@ namespace WebApplication2
             services.AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
                  {
-                     options.Authority = "http://localhost:5000";
+                     options.Authority = Configuration.GetSection("Authority").Value;
                      options.RequireHttpsMetadata = false;
                      options.Audience = "api.sample";
                  });

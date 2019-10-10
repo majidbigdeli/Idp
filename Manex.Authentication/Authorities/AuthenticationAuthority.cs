@@ -1,4 +1,4 @@
-﻿using IdentityServer4.Models;
+using IdentityServer4.Models;
 using System;
 using System.Security.Claims;
 
@@ -15,8 +15,7 @@ namespace WebIddentityServer4.Authorities
             var hash = string.Format("{0}:{1}", identifier, authSecret).Sha256();
             return new Claim[]
             {
-            new Claim("auth_key", identifier),
-            new Claim("auth_hash", hash)
+            new Claim("userId", identifier),
             };
         }
     }

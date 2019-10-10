@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Entities.Identity;
+using Manex.Authentication.Entities.Identity;
 using Manex.Authentication.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -211,6 +211,9 @@ namespace Manex.Authentication.Contracts.Identity
         /// </returns>
         Task<IdentityResult> CreateAsync(User user);
 
+
+        Task<User> CreateUserAsync(User user);
+
         /// <summary>
         /// Updates the specified <paramref name="user"/> in the backing store.
         /// </summary>
@@ -342,6 +345,10 @@ namespace Manex.Authentication.Contracts.Identity
         /// of the operation.
         /// </returns>
         Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword);
+
+        Task<IdentityResult> ChangePasswordAsync(User user, string newPassword);
+
+
 
         /// <summary>
         /// Removes a user's password.
@@ -999,7 +1006,9 @@ namespace Manex.Authentication.Contracts.Identity
 
         #region CustomMethods
 
-        User FindById(int userId);
+        Task<bool> SetUserRole(long userId, List<long> roleIds);
+
+        User FindById(long userId);
 
         Task<List<User>> GetAllUsersAsync();
 

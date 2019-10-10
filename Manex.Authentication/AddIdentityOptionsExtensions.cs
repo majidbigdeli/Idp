@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Services.Identity;
+using Manex.Authentication.Services.Identity;
 using Manex.Authentication.Entities.Identity;
 using Manex.Authentication.GuardToolkit;
 using Manex.Authentication.Identity.Settings;
@@ -123,7 +123,7 @@ namespace Manex.Authentication
 
         private static void setUserOptions(UserOptions identityOptionsUser)
         {
-            identityOptionsUser.RequireUniqueEmail = true;
+            identityOptionsUser.RequireUniqueEmail = false;
         }
     }
 

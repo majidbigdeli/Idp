@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,10 +9,8 @@ namespace WebApplication2.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValuesController : ControllerBase
-    {
-        [Authorize]
-        // GET api/values
+    public class ValuesController : ControllerBase {
+        [ManexAuthorize(new string[] {"user"})]
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {

@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Entities.Identity;
+using Manex.Authentication.Entities.Identity;
 using Manex.Authentication.GuardToolkit;
 using Manex.Authentication.Identity.Settings;
 using Microsoft.AspNetCore.Identity;
@@ -32,11 +32,10 @@ namespace Manex.Authentication.Services.Identity
             }
         }
 
-        public override async Task<IdentityResult> ValidateAsync(UserManager<User> manager, User user)
-        {
+        public override async Task<IdentityResult> ValidateAsync(UserManager<User> manager, User user) {
             // First use the built-in validator
             var result = await base.ValidateAsync(manager, user);
-            var errors = result.Succeeded ? new List<IdentityError>() : result.Errors.ToList();
+            var errors = new List<IdentityError>();
 
             // Extending the built-in validator
             validateEmail(user, errors);
@@ -45,26 +44,31 @@ namespace Manex.Authentication.Services.Identity
             return !errors.Any() ? IdentityResult.Success : IdentityResult.Failed(errors.ToArray());
         }
 
+
+
+
+
+
+
+
+
+
+
         private void validateEmail(User user, List<IdentityError> errors)
         {
             var userEmail = user?.Email;
-            if (string.IsNullOrWhiteSpace(userEmail))
-            {
-                if (string.IsNullOrWhiteSpace(userEmail))
-                {
-                    errors.Add(new IdentityError
-                    {
-                        Code = "EmailIsNotSet",
-                        Description = "لطفا اطلاعات ایمیل را تکمیل کنید."
-                    });
-                }
+            if (string.IsNullOrWhiteSpace(userEmail)) {
+                //if (string.IsNullOrWhiteSpace(userEmail)) {
+                //    errors.Add(new IdentityError {
+                //        Code = "EmailIsNotSet",
+                //        Description = "لطفا اطلاعات ایمیل را تکمیل کنید."
+                //    });
+                //}
                 return; // base.ValidateAsync() will cover this case
             }
 
-            if (_emailsBanList.Any(email => userEmail.EndsWith(email, StringComparison.OrdinalIgnoreCase)))
-            {
-                errors.Add(new IdentityError
-                {
+            if (_emailsBanList.Any(email => userEmail.EndsWith(email, StringComparison.OrdinalIgnoreCase))) {
+                errors.Add(new IdentityError {
                     Code = "BadEmailDomainError",
                     Description = "لطفا یک ایمیل پروایدر معتبر را وارد نمائید."
                 });

@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Context;
+using Manex.Authentication.Context;
 using Manex.Authentication.Contracts.Identity;
 using Manex.Authentication.Entities.AuditableEntity;
 using Manex.Authentication.Entities.Identity;

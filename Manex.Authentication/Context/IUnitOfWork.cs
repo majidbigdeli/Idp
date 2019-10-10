@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,8 @@ namespace Manex.Authentication.Context
         DbSet<TEntity> Set<TEntity>() where TEntity : class;
 
         void AddRange<TEntity>(IEnumerable<TEntity> entities) where TEntity : class;
+        void AddEntity<TEntity>(TEntity entities) where TEntity : class;
+
         void RemoveRange<TEntity>(IEnumerable<TEntity> entities) where TEntity : class;
 
         EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;

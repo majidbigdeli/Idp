@@ -1,23 +1,19 @@
-﻿using IdentityServer4.Models;
+using IdentityServer4.Models;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace WebIddentityServer4.Helpers
-{
-    public class JwtHelper
-    {
+namespace WebIddentityServer4.Helpers {
+    public class JwtHelper {
         private static string Secret = "jwtsecret".Sha256();
 
-        public static string GenerateToken(Claim[] claims, int timeout)
-        {
+        public static string GenerateToken(Claim[] claims, int timeout) {
             var symmetricKey = Convert.FromBase64String(Secret);
             var tokenHandler = new JwtSecurityTokenHandler();
 
             var now = DateTime.UtcNow;
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
+            var tokenDescriptor = new SecurityTokenDescriptor {
                 Subject = new ClaimsIdentity(claims),
                 Expires = now.AddMinutes(timeout),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(symmetricKey), SecurityAlgorithms.HmacSha256Signature)
@@ -29,8 +25,7 @@ namespace WebIddentityServer4.Helpers
             return token;
         }
 
-        public static ClaimsPrincipal GetClaimsPrincipal(string token)
-        {
+        public static ClaimsPrincipal GetClaimsPrincipal(string token) {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtToken = tokenHandler.ReadToken(token) as JwtSecurityToken;
 
@@ -38,20 +33,16 @@ namespace WebIddentityServer4.Helpers
                 return null;
 
             var symmetricKey = Convert.FromBase64String(Secret);
-            var validationParameters = new TokenValidationParameters()
-            {
+            var validationParameters = new TokenValidationParameters() {
                 ClockSkew = TimeSpan.Zero,
                 RequireExpirationTime = true,
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 IssuerSigningKey = new SymmetricSecurityKey(symmetricKey)
             };
-            try
-            {
+            try {
                 return tokenHandler.ValidateToken(token, validationParameters, out SecurityToken securityToken);
-            }
-            catch(Exception e)
-            {
+            } catch (Exception e) {
                 return null;
             }
         }

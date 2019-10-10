@@ -4,14 +4,16 @@ using Manex.Authentication.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Manex.Authentication.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20191009215758_InitMajid3")]
+    partial class InitMajid3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -104,93 +106,7 @@ namespace Manex.Authentication.Migrations
                     b.ToTable("AppSqlCache","dbo");
                 });
 
-            modelBuilder.Entity("Manex.Authentication.Entities.Identity.Role", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken();
-
-                    b.Property<string>("CreatedByBrowserName")
-                        .HasMaxLength(1000);
-
-                    b.Property<string>("CreatedByIp")
-                        .HasMaxLength(255);
-
-                    b.Property<int?>("CreatedByUserId");
-
-                    b.Property<DateTimeOffset?>("CreatedDateTime");
-
-                    b.Property<string>("Description");
-
-                    b.Property<string>("ModifiedByBrowserName")
-                        .HasMaxLength(1000);
-
-                    b.Property<string>("ModifiedByIp")
-                        .HasMaxLength(255);
-
-                    b.Property<int?>("ModifiedByUserId");
-
-                    b.Property<DateTimeOffset?>("ModifiedDateTime");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256);
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256);
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
-
-                    b.ToTable("AppRoles");
-                });
-
-            modelBuilder.Entity("Manex.Authentication.Entities.Identity.RoleClaim", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("ClaimType");
-
-                    b.Property<string>("ClaimValue");
-
-                    b.Property<string>("CreatedByBrowserName")
-                        .HasMaxLength(1000);
-
-                    b.Property<string>("CreatedByIp")
-                        .HasMaxLength(255);
-
-                    b.Property<int?>("CreatedByUserId");
-
-                    b.Property<DateTimeOffset?>("CreatedDateTime");
-
-                    b.Property<string>("ModifiedByBrowserName")
-                        .HasMaxLength(1000);
-
-                    b.Property<string>("ModifiedByIp")
-                        .HasMaxLength(255);
-
-                    b.Property<int?>("ModifiedByUserId");
-
-                    b.Property<DateTimeOffset?>("ModifiedDateTime");
-
-                    b.Property<long>("RoleId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("AppRoleClaims");
-                });
-
-            modelBuilder.Entity("Manex.Authentication.Entities.Identity.User", b =>
+            modelBuilder.Entity("Manex.Authentication.Entities.Identity.ApplicationUser", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -281,6 +197,92 @@ namespace Manex.Authentication.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AppUsers");
+                });
+
+            modelBuilder.Entity("Manex.Authentication.Entities.Identity.Role", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken();
+
+                    b.Property<string>("CreatedByBrowserName")
+                        .HasMaxLength(1000);
+
+                    b.Property<string>("CreatedByIp")
+                        .HasMaxLength(255);
+
+                    b.Property<int?>("CreatedByUserId");
+
+                    b.Property<DateTimeOffset?>("CreatedDateTime");
+
+                    b.Property<string>("Description");
+
+                    b.Property<string>("ModifiedByBrowserName")
+                        .HasMaxLength(1000);
+
+                    b.Property<string>("ModifiedByIp")
+                        .HasMaxLength(255);
+
+                    b.Property<int?>("ModifiedByUserId");
+
+                    b.Property<DateTimeOffset?>("ModifiedDateTime");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256);
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AppRoles");
+                });
+
+            modelBuilder.Entity("Manex.Authentication.Entities.Identity.RoleClaim", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("ClaimType");
+
+                    b.Property<string>("ClaimValue");
+
+                    b.Property<string>("CreatedByBrowserName")
+                        .HasMaxLength(1000);
+
+                    b.Property<string>("CreatedByIp")
+                        .HasMaxLength(255);
+
+                    b.Property<int?>("CreatedByUserId");
+
+                    b.Property<DateTimeOffset?>("CreatedDateTime");
+
+                    b.Property<string>("ModifiedByBrowserName")
+                        .HasMaxLength(1000);
+
+                    b.Property<string>("ModifiedByIp")
+                        .HasMaxLength(255);
+
+                    b.Property<int?>("ModifiedByUserId");
+
+                    b.Property<DateTimeOffset?>("ModifiedDateTime");
+
+                    b.Property<long>("RoleId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AppRoleClaims");
                 });
 
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.UserClaim", b =>
@@ -476,7 +478,7 @@ namespace Manex.Authentication.Migrations
 
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.UserClaim", b =>
                 {
-                    b.HasOne("Manex.Authentication.Entities.Identity.User", "User")
+                    b.HasOne("Manex.Authentication.Entities.Identity.ApplicationUser", "User")
                         .WithMany("Claims")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
@@ -484,7 +486,7 @@ namespace Manex.Authentication.Migrations
 
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.UserLogin", b =>
                 {
-                    b.HasOne("Manex.Authentication.Entities.Identity.User", "User")
+                    b.HasOne("Manex.Authentication.Entities.Identity.ApplicationUser", "User")
                         .WithMany("Logins")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
@@ -497,7 +499,7 @@ namespace Manex.Authentication.Migrations
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("Manex.Authentication.Entities.Identity.User", "User")
+                    b.HasOne("Manex.Authentication.Entities.Identity.ApplicationUser", "User")
                         .WithMany("Roles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
@@ -505,7 +507,7 @@ namespace Manex.Authentication.Migrations
 
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.UserToken", b =>
                 {
-                    b.HasOne("Manex.Authentication.Entities.Identity.User", "User")
+                    b.HasOne("Manex.Authentication.Entities.Identity.ApplicationUser", "User")
                         .WithMany("UserTokens")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
@@ -513,7 +515,7 @@ namespace Manex.Authentication.Migrations
 
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.UserUsedPassword", b =>
                 {
-                    b.HasOne("Manex.Authentication.Entities.Identity.User", "User")
+                    b.HasOne("Manex.Authentication.Entities.Identity.ApplicationUser", "User")
                         .WithMany("UserUsedPasswords")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);

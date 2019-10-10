@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Contracts.Identity;
+using Manex.Authentication.Contracts.Identity;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;

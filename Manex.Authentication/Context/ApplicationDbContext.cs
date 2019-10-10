@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Entities.AuditableEntity;
+using Manex.Authentication.Entities.AuditableEntity;
 using Manex.Authentication.Entities.Identity;
 using Manex.Authentication.GuardToolkit;
 using Manex.Authentication.Identity.Settings;
@@ -35,6 +35,10 @@ namespace Manex.Authentication.Context
         public void AddRange<TEntity>(IEnumerable<TEntity> entities) where TEntity : class
         {
             Set<TEntity>().AddRange(entities);
+        }
+
+        public void AddEntity<TEntity>(TEntity entities) where TEntity : class {
+            Set<TEntity>().Add(entities);
         }
 
         public void ExecuteSqlCommand(string query)
@@ -168,5 +172,7 @@ namespace Manex.Authentication.Context
             // This should be placed here, at the end.
             builder.AddAuditableShadowProperties();
         }
+
+
     }
 }

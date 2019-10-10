@@ -1,4 +1,4 @@
-﻿using DNTPersianUtils.Core;
+using DNTPersianUtils.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
@@ -39,6 +39,8 @@ namespace Manex.Authentication.Services.Identity
         private readonly IServiceProvider _services;
         private readonly DbSet<User> _users;
         private readonly DbSet<Role> _roles;
+        private readonly DbSet<UserRole> _userRoles;
+
         private readonly IApplicationUserStore _userStore;
         private readonly IEnumerable<IUserValidator<User>> _userValidators;
         private User _currentUserInScope;
@@ -96,6 +98,7 @@ namespace Manex.Authentication.Services.Identity
 
             _users = uow.Set<User>();
             _roles = uow.Set<Role>();
+            _userRoles = uow.Set<UserRole>();
         }
 
         #region BaseClass
@@ -120,6 +123,14 @@ namespace Manex.Authentication.Services.Identity
             return result;
         }
 
+        public async Task<User> CreateUserAsync(User user) {
+
+            _uow.AddEntity<User>(user);
+            await _uow.SaveChangesAsync();
+            return user;
+
+        }
+
         public override async Task<IdentityResult> CreateAsync(User user, string password)
         {
             var result = await base.CreateAsync(user, password);
@@ -129,6 +140,15 @@ namespace Manex.Authentication.Services.Identity
             }
             return result;
         }
+
+        public async Task<IdentityResult> ChangePasswordAsync(User user, string newPassword) {
+
+            IdentityResult identityResult = await this.UpdatePasswordHash(user, newPassword, true);
+            if (!identityResult.Succeeded)
+                return identityResult;
+            return await this.UpdateUserAsync(user);
+        }
+
 
         public override async Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword)
         {
@@ -154,7 +174,31 @@ namespace Manex.Authentication.Services.Identity
 
         #region CustomMethods
 
-        public User FindById(int userId)
+
+        public async Task<bool> SetUserRole(long userId, List<long> roleIds) {
+
+            var userRoles = await (from ur in _userRoles
+                                   where ur.UserId.Equals(userId)
+                                   select ur).AsNoTracking().ToListAsync();
+           _uow.RemoveRange<UserRole>(userRoles);
+
+            await _uow.SaveChangesAsync();
+
+             userRoles = new List<UserRole>();
+
+            foreach (var item in roleIds) {
+                userRoles.Add(new UserRole() {
+                    RoleId = item,
+                    UserId = userId
+                });
+            }
+            _uow.AddRange<UserRole>(userRoles);
+
+           var result =  await _uow.SaveChangesAsync();
+            return result > 0;
+        }
+
+        public User FindById(long userId)
         {
             return _users.Find(userId);
         }
@@ -194,7 +238,7 @@ namespace Manex.Authentication.Services.Identity
 
         public string GetCurrentUserId()
         {
-            return _contextAccessor.HttpContext.User.Identity.GetUserId();
+           return _contextAccessor.HttpContext.User.Identity.GetUserId();
         }
 
         public int? CurrentUserId

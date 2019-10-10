@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Context;
+using Manex.Authentication.Context;
 using Manex.Authentication.Contracts.Identity;
 using Manex.Authentication.Entities.Identity;
 using Manex.Authentication.GuardToolkit;
@@ -71,6 +71,7 @@ namespace Manex.Authentication.Services.Identity
         #endregion
 
         #region CustomMethods
+
 
         public IList<Role> FindCurrentUserRoles()
         {
