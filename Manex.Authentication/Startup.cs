@@ -167,7 +167,7 @@ namespace Manex.Authentication {
                                         AllowOfflineAccess = true,
                                         AccessTokenLifetime = siteSettings.Expire.AccessTokenLifetime,
                                         UpdateAccessTokenClaimsOnRefresh = true,
-                                        RefreshTokenUsage = TokenUsage.ReUse,
+                                        RefreshTokenUsage = TokenUsage.OneTimeOnly,
                                         RefreshTokenExpiration = TokenExpiration.Sliding,
                                         AbsoluteRefreshTokenLifetime = siteSettings.Expire.AbsoluteRefreshTokenLifetime,
                                         SlidingRefreshTokenLifetime =  siteSettings.Expire.AbsoluteRefreshTokenLifetime/2

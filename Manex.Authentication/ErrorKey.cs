@@ -6,6 +6,7 @@ namespace Manex.Authentication {
         public const string UserNotFound = "کاربری پیدا نشد";
         public const string PasswordNotCorrect = "رمز عبور اشتباه می باشد";
         public const string FaildAccessToken = "مشکل در ایجاد توکن";
+        public const string AuthroizeFaild = "هدر Authroize اشتباه میباشد";
         public const string Unknown = "خطای ناشناخته";
     }
 

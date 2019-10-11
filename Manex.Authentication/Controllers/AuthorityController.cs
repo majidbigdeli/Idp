@@ -123,34 +123,73 @@ namespace Manex.Authentication.Controllers {
         #endregion
 
         #region PasswordChange
-        [ManexAuthorize]
+        [ManexAuthorize] // دصورت استفاده ار این اتریبیوت باید  auth_token در هدر ست شود
         [HttpPost("ChangePassword")]
         public async Task<IActionResult> ChangePassword(ChangePasswordDto changePasswordDto) {
             string auth_token = Request.Headers["Authroize"].ToString();
             long userId = GetUserIdFromAuthToken(auth_token);
             if (userId == default(long)) {
-                return Ok(new { Status = false });
+                return RefreshTokenAuthNotVaild();
+            }
+            var result = await _applicationUserManager.ChangePasswordAsync(_applicationUserManager.FindById(userId), changePasswordDto.CurrentPassword, changePasswordDto.NewPassword);
+            if (!result.Succeeded) {
+                return RefreshTokenResultFaild(result);
+            }
+            return Ok(new ReturnDto() {
+                Data = null,
+                ErrorData = null,
+                Status = true
+            });
+        }
+
+
+        [ManexWithoutApiCallAuthorize] // دصورت استفاده ار این اتریبیوت باید  auth_token در هدر ست شود
+        [HttpPost("ChangePasswordDefault")]
+        public async Task<IActionResult> ChangePasswordDefault(ChangePasswordDto changePasswordDto) {
+            long userId = long.Parse(HttpContext.User.Claims.Where(x => x.Type == ClaimTypes.NameIdentifier).FirstOrDefault().Value);
+            if (userId == default(long)) {
+                return RefreshTokenAuthNotVaild();
             }
 
             var result = await _applicationUserManager.ChangePasswordAsync(_applicationUserManager.FindById(userId), changePasswordDto.CurrentPassword, changePasswordDto.NewPassword);
 
             if (!result.Succeeded) {
-                return Ok(new { Status = false });
+                return RefreshTokenResultFaild(result);
             }
-            return Ok(new { Status = true });
+            return Ok(new ReturnDto() {
+                Data = null,
+                ErrorData = null,
+                Status = true
+            });
         }
+
 
         #endregion
 
         #region role
 
-        [ManexAuthorize(new string[] { "Admin" })]
+       // [ManexAuthorize(new string[] { "Admin" })]
+       [ManexWithoutApiCallAuthorize]
         [HttpPost("CreateRole")]
         public async Task<IActionResult> CreateRole(CreateRoleDto createRoleDto) {
             var res = await _applicationRoleManager.CreateAsync(new Role() {
                 Name = createRoleDto.Name,
             });
-            return Ok(new { Status = res.Succeeded });
+            if (!res.Succeeded) {
+                List<ErrorDto> errorDto = new List<ErrorDto>();
+                foreach (var item in res.Errors.ToList()) {
+                    errorDto.Add(new ErrorDto() {
+                        Description = item.Description,
+                        Key = item.Code
+                    });
+                }
+            }
+
+            return Ok(new ReturnDto() {
+                Data = null,
+                ErrorData = null,
+                Status = true
+            });
         }
 
         [HttpPost("SetUserRole")]
@@ -158,9 +197,12 @@ namespace Manex.Authentication.Controllers {
 
             var result = await _applicationUserManager.SetUserRole(setUserRoles.UserId, setUserRoles.RoleIds);
 
-            return Ok(new { Status = result });
+            return Ok(new ReturnDto() {
+                Data = null,
+                ErrorData = null,
+                Status = result
+            });
         }
-
 
         #endregion
 
@@ -169,7 +211,7 @@ namespace Manex.Authentication.Controllers {
         public async Task<IActionResult> Register(RegisterUserDto registerUserDto) {
 
             IRegisterUserFactory factory;
-            bool result = false;
+            IdentityResult result = new IdentityResult();
             switch (string.IsNullOrWhiteSpace(registerUserDto.Password)) {
                 case true:
                     factory = new RegisterUserWithoutPasswordFactory().Create(registerUserDto, _applicationUserManager);
@@ -181,7 +223,26 @@ namespace Manex.Authentication.Controllers {
                     break;
             }
 
-            return Ok(new { Status = result });
+            if (!result.Succeeded) {
+                List<ErrorDto> errorDto = new List<ErrorDto>();
+                foreach (var item in result.Errors.ToList()) {
+                    errorDto.Add(new ErrorDto() {
+                        Description = item.Description,
+                        Key = item.Code
+                    });
+                }
+                return Ok(new ReturnDto() {
+                    Data = null,
+                    ErrorData = errorDto,
+                    Status = false
+                });
+            }
+
+            return Ok(new ReturnDto() {
+                Data = null,
+                ErrorData = null,
+                Status = true
+            });
         }
         #endregion
 
@@ -215,8 +276,12 @@ namespace Manex.Authentication.Controllers {
                     Status = true
                 });
             }
-
-            return Unauthorized();
+            
+                return Ok(new ReturnDto() {
+                    Data = null,
+                    ErrorData = null,
+                    Status = false
+                }); ;
         }
 
         [HttpPost("RefreshTokenWithoutAuthToken")]
@@ -226,27 +291,23 @@ namespace Manex.Authentication.Controllers {
                              };
             var domin = ContextHelper.GetDomin();
             AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
-            return Ok(new ReturnDto() {
-                Data = accesToken,
-                ErrorData = null,
-                Status = true
-            });
-        }
 
-        private IActionResult FaildAccessToken() {
-            List<ErrorDto> errorData = new List<ErrorDto>();
-
-            errorData.Add(new ErrorDto() {
-                Description = ErrorKey.FaildAccessToken,
-                Key = nameof(ErrorKey.FaildAccessToken)
-            });
+            if (!string.IsNullOrWhiteSpace(accesToken.access_token)) {
+                return Ok(new ReturnDto() {
+                    Data = accesToken,
+                    ErrorData = null,
+                    Status = true
+                });
+            }
 
             return Ok(new ReturnDto() {
                 Data = null,
-                ErrorData = errorData,
+                ErrorData = null,
                 Status = false
-            });
+            }); ;
+
         }
+
         #endregion
 
         #region ManexAuthorize Attribute api
@@ -311,6 +372,21 @@ namespace Manex.Authentication.Controllers {
                 Status = false
             };
         }
+
+        private IActionResult RefreshTokenAuthNotVaild() {
+            List<ErrorDto> errorData = new List<ErrorDto>();
+            errorData.Add(new ErrorDto() {
+                Description = ErrorKey.AuthroizeFaild,
+                Key = nameof(ErrorKey.AuthroizeFaild)
+            });
+
+            return Ok(new ReturnDto() {
+                Data = null,
+                ErrorData = errorData,
+                Status = false
+            });
+        }
+
 
         private async Task<ReturnDto> ResultFactory(VerifyEnum authority, IssuerVerifyResult verifyResult) {
             ReturnDto ret = new ReturnDto();
@@ -395,6 +471,39 @@ namespace Manex.Authentication.Controllers {
             }
             return default(long);
         }
+
+        private IActionResult FaildAccessToken() {
+            List<ErrorDto> errorData = new List<ErrorDto>();
+
+            errorData.Add(new ErrorDto() {
+                Description = ErrorKey.FaildAccessToken,
+                Key = nameof(ErrorKey.FaildAccessToken)
+            });
+
+            return Ok(new ReturnDto() {
+                Data = null,
+                ErrorData = errorData,
+                Status = false
+            });
+        }
+
+        private IActionResult RefreshTokenResultFaild(IdentityResult result) {
+            List<ErrorDto> errorDto = new List<ErrorDto>();
+            foreach (var item in result.Errors.ToList()) {
+                errorDto.Add(new ErrorDto() {
+                    Description = item.Description,
+                    Key = item.Code
+                });
+            }
+
+            return Ok(new ReturnDto() {
+                Data = null,
+                ErrorData = errorDto,
+                Status = false
+            });
+        }
+
+
 
         #endregion
     }

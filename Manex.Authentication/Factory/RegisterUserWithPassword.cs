@@ -1,5 +1,6 @@
 using Manex.Authentication.Contracts.Identity;
 using Manex.Authentication.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 namespace Manex.Authentication.Factory {
 
     public interface IRegisterUserFactory {
-        Task<bool> Register();
+        Task<IdentityResult> Register();
     }
 
     public class RegisterUserWithPassword : IRegisterUserFactory {
@@ -22,7 +23,7 @@ namespace Manex.Authentication.Factory {
             _applicationUserManager = applicationUserManager;
 
         }
-        public async Task<bool> Register() {
+        public async Task<IdentityResult> Register() {
             var res = await _applicationUserManager.CreateAsync(new User {
                 UserName = _user.Phone,
                 FirstName = _user.FirstName,
@@ -31,7 +32,7 @@ namespace Manex.Authentication.Factory {
                 IsActive = true
             }, _user.Password);
 
-            return res.Succeeded;
+            return res;
         }
     }
 
@@ -44,7 +45,7 @@ namespace Manex.Authentication.Factory {
             _applicationUserManager = applicationUserManager;
         }
 
-        public async Task<bool> Register() {
+        public async Task<IdentityResult> Register() {
             var user = new User {
                 UserName = _user.Phone,
                 FirstName = _user.FirstName,
@@ -54,7 +55,7 @@ namespace Manex.Authentication.Factory {
             };
             var result = await _applicationUserManager.CreateUserAsync(user);
 
-            return result.Succeeded;
+            return result;
         }
     }
 
