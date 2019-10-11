@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using DNTCommon.Web.Core;
 using Microsoft.AspNetCore.Identity;
 
@@ -24,5 +24,8 @@ namespace Manex.Authentication.Identity.Settings
         public UserAvatarImageOptions UserAvatarImageOptions { get; set; }
         public string[] EmailsBanList { get; set; }
         public string[] PasswordsBanList { get; set; }
+        public string Authority { get; set; }
+        public Expire Expire { get; set; }
+        public int LengthOtp { get; set; }
     }
 }

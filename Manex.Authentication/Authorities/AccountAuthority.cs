@@ -1,10 +1,9 @@
 using Manex.Authentication;
 using Manex.Authentication.Contracts.Identity;
 using Manex.Authentication.Entities.Identity;
-using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 
 namespace WebIddentityServer4.Authorities {
@@ -26,21 +25,19 @@ namespace WebIddentityServer4.Authorities {
             var user = _applicationUserManager.FindByNameAsync(payload["phone"].ToString()).Result;
             if (user == null) {
 
-                user = _applicationUserManager.CreateUserAsync(new User {
+                user = new User {
                     UserName = payload["phone"].ToString(),
                     IsActive = true,
                     EmailConfirmed = true
-                }).Result;
+                };
 
-                if (user.Id == default(long)) {
+               var result = _applicationUserManager.CreateUserAsync(user).Result;
+
+                if (!result.Succeeded) {
 
                     Exception ex = new Exception();
-                    List<IdentityError> errors = new List<IdentityError>();
-                    errors.Add(new IdentityError {
-                        Code = nameof(ErrorKey.CreateUserFaild),
-                        Description = ErrorKey.CreateUserFaild
-                    });
-                    ex.Data.Add(Gp_Error.IdentityResultFaild, errors);
+
+                    ex.Data.Add(Gp_Error.IdentityResultFaild, result.Errors.ToList());
                     throw ex;
                 } }
 

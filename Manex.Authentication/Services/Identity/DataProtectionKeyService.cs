@@ -40,7 +40,7 @@ namespace Manex.Authentication.Services.Identity
             _serviceProvider.RunScopedService<IUnitOfWork>(context =>
             {
                 var dataProtectionKeys = context.Set<AppDataProtectionKey>();
-                var entity = dataProtectionKeys.SingleOrDefault(k => k.FriendlyName == friendlyName);
+                var entity = dataProtectionKeys.FirstOrDefault(k => k.FriendlyName == friendlyName);
                 if (null != entity)
                 {
                     entity.XmlData = element.ToString();

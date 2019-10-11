@@ -9,7 +9,7 @@ namespace Manex.Authentication
 {
     public class AuthenticationGrant : IExtensionGrantValidator
     {
-        private static string authSecret = "authenticationsecret".Sha256();
+        private static string authSecret = "91c76808-ae3b-4a63-8a61-c2bcda5fe69c";
 
         public string GrantType => "authentication";
 

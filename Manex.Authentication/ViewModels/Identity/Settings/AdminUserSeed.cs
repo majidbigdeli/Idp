@@ -1,5 +1,4 @@
-namespace Manex.Authentication.Identity.Settings
-{
+namespace Manex.Authentication.Identity.Settings {
     public class AdminUserSeed
     {
         public string Username { get; set; }

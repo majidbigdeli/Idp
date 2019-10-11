@@ -5,6 +5,7 @@ namespace Manex.Authentication {
         public const string ExpireToken = "توکن منقضی شده است";
         public const string UserNotFound = "کاربری پیدا نشد";
         public const string PasswordNotCorrect = "رمز عبور اشتباه می باشد";
+        public const string FaildAccessToken = "مشکل در ایجاد توکن";
         public const string Unknown = "خطای ناشناخته";
     }
 

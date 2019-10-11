@@ -240,7 +240,7 @@ namespace Manex.Authentication.Services.Identity
             var removedClaimValues = currentRoleClaimValues.Except(selectedRoleClaimValues).ToList();
             foreach (var claimValue in removedClaimValues)
             {
-                var roleClaim = role.Claims.SingleOrDefault(rc => rc.ClaimValue == claimValue &&
+                var roleClaim = role.Claims.FirstOrDefault(rc => rc.ClaimValue == claimValue &&
                                                                   rc.ClaimType == roleClaimType);
                 if (roleClaim != null)
                 {

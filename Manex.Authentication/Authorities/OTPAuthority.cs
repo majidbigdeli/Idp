@@ -26,7 +26,7 @@ namespace WebIddentityServer4.Authorities {
         public string[] Payload => new string[] { "otp" };
 
         private Claim[] generateOTPClaims(string phone) {
-            var digit = 4;
+            var digit = _configuration.GetValue<int>("LengthOtp");
             var otp = new Random().Next((int)Math.Pow(10, (digit - 1)), (int)Math.Pow(10, digit) - 1).ToString("####");
 
             string manexAndroidAppToken = _configuration.GetSection("ManexAndroidAppToken").Value;
@@ -44,20 +44,20 @@ namespace WebIddentityServer4.Authorities {
         }
 
         public Claim[] OnForward(Claim[] claims) {
-            var phone = claims.Single(c => c.Type == "phone").Value;
+            var phone = claims.FirstOrDefault(c => c.Type == "phone").Value;
             return generateOTPClaims(phone);
         }
 
         public Claim[] OnVerify(Claim[] claims, JObject payload, string identifier, out bool valid) {
             Exception ex;
             valid = false;
-            var id = claims.Single(c => c.Type == identifier).Value;
-            var otpId = claims.Single(c => c.Type == "otp_id").Value;
-            var hash = claims.Single(c => c.Type == "otp_hash").Value;
+            var id = claims.FirstOrDefault(c => c.Type == identifier).Value;
+            var otpId = claims.FirstOrDefault(c => c.Type == "otp_id").Value;
+            var hash = claims.FirstOrDefault(c => c.Type == "otp_hash").Value;
             if (string.Format("{0}:{1}", otpId, payload["otp"].ToString()).Sha256() == hash) {
 
                 if (!string.IsNullOrWhiteSpace(payload["password"]?.ToString())) {
-                    var phone = claims.Single(c => c.Type == "phone").Value;
+                    var phone = claims.FirstOrDefault(c => c.Type == "phone").Value;
                     var user = _applicationUserManager.FindByNameAsync(phone).Result;
 
                     var result = _applicationUserManager.ChangePasswordAsync(user, payload["password"].ToString()).Result;

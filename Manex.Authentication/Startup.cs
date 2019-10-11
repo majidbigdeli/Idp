@@ -1,11 +1,6 @@
 using DNTCommon.Web.Core;
-using IdentityModel;
-using IdentityServer4.AccessTokenValidation;
 using IdentityServer4.Models;
-using IdentityServer4.Services;
-using IdentityServer4.Validation;
 using Manex.Authentication.Context;
-using Manex.Authentication.Entities.Identity;
 using Manex.Authentication.Identity.Settings;
 using Manex.Authentication.Services.Identity;
 using Microsoft.AspNetCore.Builder;
@@ -13,12 +8,14 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-
+using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Swagger;
-
+using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace Manex.Authentication {
+
 
     public class Startup {
 
@@ -47,7 +44,7 @@ namespace Manex.Authentication {
                 o.DefaultScheme = "Bearer";
                 o.DefaultChallengeScheme = "Bearer";
             }).AddJwtBearer("Bearer", options => {
-                options.Authority = Configuration.GetSection("Authority").Value;
+                options.Authority = siteSettings.Authority; //Configuration.GetSection("Authority").Value;
                 options.RequireHttpsMetadata = false;
                 options.Audience = "api.sample";
             });
@@ -67,12 +64,13 @@ namespace Manex.Authentication {
                 options.Events.RaiseFailureEvents = true;
                 options.Events.RaiseSuccessEvents = true;
             })
-        .AddDeveloperSigningCredential()
+        //.AddDeveloperSigningCredential()
         .AddInMemoryIdentityResources(GetIdentityResources())
         .AddInMemoryApiResources(GetApiResources())
-        .AddInMemoryClients(GetClients())
-        .AddExtensionGrantValidator<AuthenticationGrant>();
-
+        .AddInMemoryClients(GetClients(siteSettings))
+        .AddExtensionGrantValidator<AuthenticationGrant>()
+        .AddProfileService<AspNetIdentityProfileService>()
+        .AddSigningCredential(new SigningCredentials(RsaSecurityKeyManager.getInstance(), SecurityAlgorithms.RsaSha256));
 
             services.AddDbContextPool<ApplicationDbContext>((serviceProvider, optionsBuilder) => {
                 optionsBuilder.SetDbContextOptions(siteSettings);
@@ -151,7 +149,7 @@ namespace Manex.Authentication {
     };
         }
 
-        public static IEnumerable<Client> GetClients() {
+        public static IEnumerable<Client> GetClients(SiteSettings siteSettings) {
             return new List<Client>
             {
           new Client
@@ -166,8 +164,17 @@ namespace Manex.Authentication {
                                         {
                                             "api.sample"
                                         },
-                                        AllowOfflineAccess = true
-                                    }
+                                        AllowOfflineAccess = true,
+                                        AccessTokenLifetime = siteSettings.Expire.AccessTokenLifetime,
+                                        UpdateAccessTokenClaimsOnRefresh = true,
+                                        RefreshTokenUsage = TokenUsage.ReUse,
+                                        RefreshTokenExpiration = TokenExpiration.Sliding,
+                                        AbsoluteRefreshTokenLifetime = siteSettings.Expire.AbsoluteRefreshTokenLifetime,
+                                        SlidingRefreshTokenLifetime =  siteSettings.Expire.AbsoluteRefreshTokenLifetime/2
+
+
+
+        }
     };
         }
 

@@ -6,28 +6,25 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Manex.Authentication.Services.Identity
-{
+namespace Manex.Authentication.Services.Identity {
     /// <summary>
     /// Extending the Built-in User Validation
     /// More info: http://www.dotnettips.info/post/2579
     /// </summary>
-    public class CustomUserValidator : UserValidator<User>
-    {
+    public class CustomUserValidator : UserValidator<User> {
         private readonly ISet<string> _emailsBanList;
 
         public CustomUserValidator(
             IdentityErrorDescriber errors,// How to use CustomIdentityErrorDescriber
             IOptionsSnapshot<SiteSettings> configurationRoot
-            ) : base(errors)
-        {
+            ) : base(errors) {
             configurationRoot.CheckArgumentIsNull(nameof(configurationRoot));
             _emailsBanList = new HashSet<string>(configurationRoot.Value.EmailsBanList, StringComparer.OrdinalIgnoreCase);
 
-            if (!_emailsBanList.Any())
-            {
+            if (!_emailsBanList.Any()) {
                 throw new InvalidOperationException("Please fill the emails ban list in the appsettings.json file.");
             }
         }
@@ -43,10 +40,9 @@ namespace Manex.Authentication.Services.Identity
 
             return !errors.Any() ? IdentityResult.Success : IdentityResult.Failed(errors.ToArray());
         }
-                                    
 
-        private void validateEmail(User user, List<IdentityError> errors)
-        {
+
+        private void validateEmail(User user, List<IdentityError> errors) {
             var userEmail = user?.Email;
             if (string.IsNullOrWhiteSpace(userEmail)) {
                 //if (string.IsNullOrWhiteSpace(userEmail)) {
@@ -58,6 +54,8 @@ namespace Manex.Authentication.Services.Identity
                 return; // base.ValidateAsync() will cover this case
             }
 
+
+
             if (_emailsBanList.Any(email => userEmail.EndsWith(email, StringComparison.OrdinalIgnoreCase))) {
                 errors.Add(new IdentityError {
                     Code = "BadEmailDomainError",
@@ -66,20 +64,23 @@ namespace Manex.Authentication.Services.Identity
             }
         }
 
-        private static void validateUserName(User user, List<IdentityError> errors)
-        {
+        private static void validateUserName(User user, List<IdentityError> errors) {
             var userName = user?.UserName;
-            if (string.IsNullOrWhiteSpace(userName))
-            {
-                if (string.IsNullOrWhiteSpace(userName))
-                {
-                    errors.Add(new IdentityError
-                    {
+            if (string.IsNullOrWhiteSpace(userName)) {
+                if (string.IsNullOrWhiteSpace(userName)) {
+                    errors.Add(new IdentityError {
                         Code = "UserIsNotSet",
                         Description = "لطفا اطلاعات کاربری را تکمیل کنید."
                     });
                 }
                 return;  // base.ValidateAsync() will cover this case
+            }
+
+            if (!Regex.IsMatch(userName, @"^(\+98|0)?9\d{9}$")) {
+                errors.Add(new IdentityError {
+                    Code = "BadUserNameError",
+                    Description = "شماره موبایل درست نمی باشد"
+                });
             }
 
             //if (userName.IsNumeric() || userName.ContainsNumber())
@@ -91,10 +92,8 @@ namespace Manex.Authentication.Services.Identity
             //    });
             //}
 
-            if (userName.HasConsecutiveChars())
-            {
-                errors.Add(new IdentityError
-                {
+            if (userName.HasConsecutiveChars()) {
+                errors.Add(new IdentityError {
                     Code = "BadUserNameError",
                     Description = "نام کاربری وارد شده معتبر نیست."
                 });

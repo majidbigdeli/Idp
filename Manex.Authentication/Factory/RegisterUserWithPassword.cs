@@ -45,15 +45,16 @@ namespace Manex.Authentication.Factory {
         }
 
         public async Task<bool> Register() {
-            var user = await _applicationUserManager.CreateUserAsync(new User {
+            var user = new User {
                 UserName = _user.Phone,
                 FirstName = _user.FirstName,
                 LastName = _user.LastName,
                 Email = _user.Email,
                 IsActive = true
-            });
+            };
+            var result = await _applicationUserManager.CreateUserAsync(user);
 
-            return user.Id > default(long) ? true : false;
+            return result.Succeeded;
         }
     }
 

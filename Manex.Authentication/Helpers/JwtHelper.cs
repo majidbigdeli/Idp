@@ -1,4 +1,5 @@
 using IdentityServer4.Models;
+using Manex.Authentication;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,8 +16,8 @@ namespace WebIddentityServer4.Helpers {
             var now = DateTime.UtcNow;
             var tokenDescriptor = new SecurityTokenDescriptor {
                 Subject = new ClaimsIdentity(claims),
-                Expires = now.AddMinutes(timeout),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(symmetricKey), SecurityAlgorithms.HmacSha256Signature)
+                Expires = now.AddSeconds(timeout),
+                SigningCredentials = new SigningCredentials(RsaSecurityKeyManager.getInstance(), SecurityAlgorithms.RsaSha256)
             };
 
             var stoken = tokenHandler.CreateToken(tokenDescriptor);
@@ -38,8 +39,8 @@ namespace WebIddentityServer4.Helpers {
                 RequireExpirationTime = true,
                 ValidateIssuer = false,
                 ValidateAudience = false,
-                IssuerSigningKey = new SymmetricSecurityKey(symmetricKey)
-            };
+                IssuerSigningKey = RsaSecurityKeyManager.getInstance()
+        };
             try {
                 return tokenHandler.ValidateToken(token, validationParameters, out SecurityToken securityToken);
             } catch (Exception e) {

@@ -18,15 +18,13 @@ using Manex.Authentication.GuardToolkit;
 using Manex.Authentication.IdentityToolkit;
 using Manex.Authentication.Identity;
 
-namespace Manex.Authentication.Services.Identity
-{
+namespace Manex.Authentication.Services.Identity {
     /// <summary>
     /// More info: http://www.dotnettips.info/post/2578
     /// </summary>
     public class ApplicationUserManager :
         UserManager<User>,
-        IApplicationUserManager
-    {
+        IApplicationUserManager {
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly IUnitOfWork _uow;
         private readonly IUsedPasswordsService _usedPasswordsService;
@@ -58,8 +56,7 @@ namespace Manex.Authentication.Services.Identity
             IHttpContextAccessor contextAccessor,
             IUnitOfWork uow,
             IUsedPasswordsService usedPasswordsService)
-            : base((UserStore<User, Role, ApplicationDbContext, long, UserClaim, UserRole, UserLogin, UserToken, RoleClaim>)store, optionsAccessor, passwordHasher, userValidators, passwordValidators, keyNormalizer, errors, services, logger)
-        {
+            : base((UserStore<User, Role, ApplicationDbContext, long, UserClaim, UserRole, UserLogin, UserToken, RoleClaim>)store, optionsAccessor, passwordHasher, userValidators, passwordValidators, keyNormalizer, errors, services, logger) {
             _userStore = store;
             _userStore.CheckArgumentIsNull(nameof(_userStore));
 
@@ -103,39 +100,33 @@ namespace Manex.Authentication.Services.Identity
 
         #region BaseClass
 
-        string IApplicationUserManager.CreateTwoFactorRecoveryCode()
-        {
+        string IApplicationUserManager.CreateTwoFactorRecoveryCode() {
             return base.CreateTwoFactorRecoveryCode();
         }
 
-        Task<PasswordVerificationResult> IApplicationUserManager.VerifyPasswordAsync(IUserPasswordStore<User> store, User user, string password)
-        {
+        Task<PasswordVerificationResult> IApplicationUserManager.VerifyPasswordAsync(IUserPasswordStore<User> store, User user, string password) {
             return base.VerifyPasswordAsync(store, user, password);
         }
 
-        public override async Task<IdentityResult> CreateAsync(User user)
-        {
+        public override async Task<IdentityResult> CreateAsync(User user) {
             var result = await base.CreateAsync(user);
-            if (result.Succeeded)
-            {
+            if (result.Succeeded) {
                 await _usedPasswordsService.AddToUsedPasswordsListAsync(user);
             }
             return result;
         }
 
-        public async Task<User> CreateUserAsync(User user) {
+        public async Task<IdentityResult> CreateUserAsync(User user) {
 
-            _uow.AddEntity<User>(user);
-            await _uow.SaveChangesAsync();
-            return user;
-
+            var result = await base.CreateAsync(user);
+            return result;
         }
 
-        public override async Task<IdentityResult> CreateAsync(User user, string password)
-        {
+
+
+        public override async Task<IdentityResult> CreateAsync(User user, string password) {
             var result = await base.CreateAsync(user, password);
-            if (result.Succeeded)
-            {
+            if (result.Succeeded) {
                 await _usedPasswordsService.AddToUsedPasswordsListAsync(user);
             }
             return result;
@@ -150,21 +141,17 @@ namespace Manex.Authentication.Services.Identity
         }
 
 
-        public override async Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword)
-        {
+        public override async Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword) {
             var result = await base.ChangePasswordAsync(user, currentPassword, newPassword);
-            if (result.Succeeded)
-            {
+            if (result.Succeeded) {
                 await _usedPasswordsService.AddToUsedPasswordsListAsync(user);
             }
             return result;
         }
 
-        public override async Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword)
-        {
+        public override async Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword) {
             var result = await base.ResetPasswordAsync(user, token, newPassword);
-            if (result.Succeeded)
-            {
+            if (result.Succeeded) {
                 await _usedPasswordsService.AddToUsedPasswordsListAsync(user);
             }
             return result;
@@ -180,11 +167,11 @@ namespace Manex.Authentication.Services.Identity
             var userRoles = await (from ur in _userRoles
                                    where ur.UserId.Equals(userId)
                                    select ur).AsNoTracking().ToListAsync();
-           _uow.RemoveRange<UserRole>(userRoles);
+            _uow.RemoveRange<UserRole>(userRoles);
 
             await _uow.SaveChangesAsync();
 
-             userRoles = new List<UserRole>();
+            userRoles = new List<UserRole>();
 
             foreach (var item in roleIds) {
                 userRoles.Add(new UserRole() {
@@ -194,35 +181,29 @@ namespace Manex.Authentication.Services.Identity
             }
             _uow.AddRange<UserRole>(userRoles);
 
-           var result =  await _uow.SaveChangesAsync();
+            var result = await _uow.SaveChangesAsync();
             return result > 0;
         }
 
-        public User FindById(long userId)
-        {
+        public User FindById(long userId) {
             return _users.Find(userId);
         }
 
-        public Task<User> FindByIdIncludeUserRolesAsync(int userId)
-        {
+        public Task<User> FindByIdIncludeUserRolesAsync(int userId) {
             return _users.Include(x => x.Roles).FirstOrDefaultAsync(x => x.Id == userId);
         }
 
-        public Task<List<User>> GetAllUsersAsync()
-        {
+        public Task<List<User>> GetAllUsersAsync() {
             return Users.ToListAsync();
         }
 
-        public User GetCurrentUser()
-        {
-            if (_currentUserInScope != null)
-            {
+        public User GetCurrentUser() {
+            if (_currentUserInScope != null) {
                 return _currentUserInScope;
             }
 
             var currentUserId = GetCurrentUserId();
-            if (string.IsNullOrWhiteSpace(currentUserId))
-            {
+            if (string.IsNullOrWhiteSpace(currentUserId)) {
                 return null;
             }
 
@@ -230,24 +211,19 @@ namespace Manex.Authentication.Services.Identity
             return _currentUserInScope = FindById(userId);
         }
 
-        public async Task<User> GetCurrentUserAsync()
-        {
+        public async Task<User> GetCurrentUserAsync() {
             return _currentUserInScope ??
                 (_currentUserInScope = await GetUserAsync(_contextAccessor.HttpContext.User));
         }
 
-        public string GetCurrentUserId()
-        {
-           return _contextAccessor.HttpContext.User.Identity.GetUserId();
+        public string GetCurrentUserId() {
+            return _contextAccessor.HttpContext.User.Identity.GetUserId();
         }
 
-        public int? CurrentUserId
-        {
-            get
-            {
+        public int? CurrentUserId {
+            get {
                 var userId = _contextAccessor.HttpContext.User.Identity.GetUserId();
-                if (string.IsNullOrEmpty(userId))
-                {
+                if (string.IsNullOrEmpty(userId)) {
                     return null;
                 }
 
@@ -264,25 +240,21 @@ namespace Manex.Authentication.Services.Identity
 
         IQueryable<User> IApplicationUserManager.Users => base.Users;
 
-        public string GetCurrentUserName()
-        {
+        public string GetCurrentUserName() {
             return _contextAccessor.HttpContext.User.Identity.GetUserName();
         }
 
-        public async Task<bool> HasPasswordAsync(int userId)
-        {
+        public async Task<bool> HasPasswordAsync(int userId) {
             var user = await FindByIdAsync(userId.ToString());
             return user?.PasswordHash != null;
         }
 
-        public async Task<bool> HasPhoneNumberAsync(int userId)
-        {
+        public async Task<bool> HasPhoneNumberAsync(int userId) {
             var user = await FindByIdAsync(userId.ToString());
             return user?.PhoneNumber != null;
         }
 
-        public async Task<byte[]> GetEmailImageAsync(int? userId)
-        {
+        public async Task<byte[]> GetEmailImageAsync(int? userId) {
             if (userId == null)
                 return "?".TextToImage(new TextToImageOptions());
 
@@ -296,73 +268,59 @@ namespace Manex.Authentication.Services.Identity
             return user.Email.TextToImage(new TextToImageOptions());
         }
 
-        public async Task<PagedUsersListViewModel> GetPagedUsersListAsync(SearchUsersViewModel model, int pageNumber)
-        {
+        public async Task<PagedUsersListViewModel> GetPagedUsersListAsync(SearchUsersViewModel model, int pageNumber) {
             var skipRecords = pageNumber * model.MaxNumberOfRows;
             var query = _users.Include(x => x.Roles).AsNoTracking();
 
-            if (!model.ShowAllUsers)
-            {
+            if (!model.ShowAllUsers) {
                 query = query.Where(x => x.IsActive == model.UserIsActive);
             }
 
-            if (!string.IsNullOrWhiteSpace(model.TextToFind))
-            {
+            if (!string.IsNullOrWhiteSpace(model.TextToFind)) {
                 model.TextToFind = model.TextToFind.ApplyCorrectYeKe();
 
-                if (model.IsPartOfEmail)
-                {
+                if (model.IsPartOfEmail) {
                     query = query.Where(x => x.Email.Contains(model.TextToFind));
                 }
 
-                if (model.IsUserId)
-                {
+                if (model.IsUserId) {
                     int userId;
-                    if (int.TryParse(model.TextToFind, out userId))
-                    {
+                    if (int.TryParse(model.TextToFind, out userId)) {
                         query = query.Where(x => x.Id == userId);
                     }
                 }
 
-                if (model.IsPartOfName)
-                {
+                if (model.IsPartOfName) {
                     query = query.Where(x => x.FirstName.Contains(model.TextToFind));
                 }
 
-                if (model.IsPartOfLastName)
-                {
+                if (model.IsPartOfLastName) {
                     query = query.Where(x => x.LastName.Contains(model.TextToFind));
                 }
 
-                if (model.IsPartOfUserName)
-                {
+                if (model.IsPartOfUserName) {
                     query = query.Where(x => x.UserName.Contains(model.TextToFind));
                 }
 
-                if (model.IsPartOfLocation)
-                {
+                if (model.IsPartOfLocation) {
                     query = query.Where(x => x.Location.Contains(model.TextToFind));
                 }
             }
 
-            if (model.HasEmailConfirmed)
-            {
+            if (model.HasEmailConfirmed) {
                 query = query.Where(x => x.EmailConfirmed);
             }
 
-            if (model.UserIsLockedOut)
-            {
+            if (model.UserIsLockedOut) {
                 query = query.Where(x => x.LockoutEnd != null);
             }
 
-            if (model.HasTwoFactorEnabled)
-            {
+            if (model.HasTwoFactorEnabled) {
                 query = query.Where(x => x.TwoFactorEnabled);
             }
 
             query = query.OrderBy(x => x.Id);
-            return new PagedUsersListViewModel
-            {
+            return new PagedUsersListViewModel {
                 Paging =
                 {
                     TotalItems = await query.CountAsync()
@@ -375,18 +333,15 @@ namespace Manex.Authentication.Services.Identity
         public async Task<PagedUsersListViewModel> GetPagedUsersListAsync(
             int pageNumber, int recordsPerPage,
             string sortByField, SortOrder sortOrder,
-            bool showAllUsers)
-        {
+            bool showAllUsers) {
             var skipRecords = pageNumber * recordsPerPage;
             var query = _users.Include(x => x.Roles).AsNoTracking();
 
-            if (!showAllUsers)
-            {
+            if (!showAllUsers) {
                 query = query.Where(x => x.IsActive);
             }
 
-            switch (sortByField)
-            {
+            switch (sortByField) {
                 case nameof(User.Id):
                     query = sortOrder == SortOrder.Descending ? query.OrderByDescending(x => x.Id) : query.OrderBy(x => x.Id);
                     break;
@@ -395,8 +350,7 @@ namespace Manex.Authentication.Services.Identity
                     break;
             }
 
-            return new PagedUsersListViewModel
-            {
+            return new PagedUsersListViewModel {
                 Paging =
                 {
                     TotalItems = await query.CountAsync()
@@ -406,13 +360,10 @@ namespace Manex.Authentication.Services.Identity
             };
         }
 
-        public async Task<IdentityResult> UpdateUserAndSecurityStampAsync(int userId, Action<User> action)
-        {
+        public async Task<IdentityResult> UpdateUserAndSecurityStampAsync(int userId, Action<User> action) {
             var user = await FindByIdIncludeUserRolesAsync(userId);
-            if (user == null)
-            {
-                return IdentityResult.Failed(new IdentityError
-                {
+            if (user == null) {
+                return IdentityResult.Failed(new IdentityError {
                     Code = "UserNotFound",
                     Description = "کاربر مورد نظر یافت نشد."
                 });
@@ -421,20 +372,16 @@ namespace Manex.Authentication.Services.Identity
             action(user);
 
             var result = await UpdateAsync(user);
-            if (!result.Succeeded)
-            {
+            if (!result.Succeeded) {
                 return result;
             }
             return await UpdateSecurityStampAsync(user);
         }
 
-        public async Task<IdentityResult> AddOrUpdateUserRolesAsync(int userId, IList<long> selectedRoleIds, Action<User> action = null)
-        {
+        public async Task<IdentityResult> AddOrUpdateUserRolesAsync(int userId, IList<long> selectedRoleIds, Action<User> action = null) {
             var user = await FindByIdIncludeUserRolesAsync(userId);
-            if (user == null)
-            {
-                return IdentityResult.Failed(new IdentityError
-                {
+            if (user == null) {
+                return IdentityResult.Failed(new IdentityError {
                     Code = "UserNotFound",
                     Description = "کاربر مورد نظر یافت نشد."
                 });
@@ -442,22 +389,18 @@ namespace Manex.Authentication.Services.Identity
 
             var currentUserRoleIds = user.Roles.Select(x => x.RoleId).ToList();
 
-            if (selectedRoleIds == null)
-            {
+            if (selectedRoleIds == null) {
                 selectedRoleIds = new List<long>();
             }
             var newRolesToAdd = selectedRoleIds.Except(currentUserRoleIds).ToList();
-            foreach (var roleId in newRolesToAdd)
-            {
+            foreach (var roleId in newRolesToAdd) {
                 user.Roles.Add(new UserRole { RoleId = roleId, UserId = user.Id });
             }
 
             var removedRoles = currentUserRoleIds.Except(selectedRoleIds).ToList();
-            foreach (var roleId in removedRoles)
-            {
-                var userRole = user.Roles.SingleOrDefault(ur => ur.RoleId == roleId);
-                if (userRole != null)
-                {
+            foreach (var roleId in removedRoles) {
+                var userRole = user.Roles.FirstOrDefault(ur => ur.RoleId == roleId);
+                if (userRole != null) {
                     user.Roles.Remove(userRole);
                 }
             }
@@ -465,8 +408,7 @@ namespace Manex.Authentication.Services.Identity
             action?.Invoke(user);
 
             var result = await UpdateAsync(user);
-            if (!result.Succeeded)
-            {
+            if (!result.Succeeded) {
                 return result;
             }
             return await UpdateSecurityStampAsync(user);

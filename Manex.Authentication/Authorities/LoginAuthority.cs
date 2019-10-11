@@ -6,8 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 
-namespace WebIddentityServer4.Authorities
-{
+namespace WebIddentityServer4.Authorities {
     public class LoginAuthority : IAuthority
     {
 
@@ -66,4 +65,5 @@ namespace WebIddentityServer4.Authorities
             };
         }
     }
+
 }

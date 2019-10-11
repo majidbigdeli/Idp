@@ -212,7 +212,7 @@ namespace Manex.Authentication.Contracts.Identity
         Task<IdentityResult> CreateAsync(User user);
 
 
-        Task<User> CreateUserAsync(User user);
+        Task<IdentityResult> CreateUserAsync(User user);
 
         /// <summary>
         /// Updates the specified <paramref name="user"/> in the backing store.

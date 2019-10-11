@@ -31,32 +31,50 @@ namespace Manex.Authentication.Services.Identity {
 
     public class AspNetIdentityProfileService : IProfileService {
         private readonly UserManager<User> _userManager;
+        private readonly IUserClaimsPrincipalFactory<User> _claimsFactory;
 
-        public AspNetIdentityProfileService(UserManager<User> userManager) {
+        public AspNetIdentityProfileService(IUserClaimsPrincipalFactory<User> claimsFactory, UserManager<User> userManager) {
             _userManager = userManager;
+            _claimsFactory = claimsFactory;
         }
 
         public async Task GetProfileDataAsync(ProfileDataRequestContext context) {
-            var subject = context.Subject;
-            if (subject == null) throw new ArgumentNullException(nameof(context.Subject));
 
-            var subjectId = subject.GetSubjectId();
-
-            var user = await _userManager.FindByIdAsync(subjectId);
-            if (user == null)
-                throw new ArgumentException("Invalid subject identifier");
-
-            var claims = await GetClaimsFromUser(user);
-
-            //var siteIdClaim = claims.SingleOrDefault(x => x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
-            context.IssuedClaims.Add(new Claim(JwtClaimTypes.Email, user.Email));
-           // context.IssuedClaims.Add(new Claim("siteid", siteIdClaim.Value));
-            context.IssuedClaims.Add(new Claim(JwtClaimTypes.Role, "User"));
-
-            var roleClaims = claims.Where(x => x.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
-            foreach (var roleClaim in roleClaims) {
-                context.IssuedClaims.Add(new Claim(JwtClaimTypes.Role, roleClaim.Value));
+            var sub = context.Subject.GetSubjectId();
+            var user = await _userManager.FindByIdAsync(sub);
+            if (user == null) {
+                throw new ArgumentException("");
             }
+
+            var principal = await _claimsFactory.CreateAsync(user);
+            var claims = principal.Claims.ToList();
+
+            //Add more claims like this
+            //claims.Add(new System.Security.Claims.Claim("MyProfileID", user.Id));
+
+            context.IssuedClaims = claims;
+
+
+            // var subject = context.Subject;
+            // if (subject == null) throw new ArgumentNullException(nameof(context.Subject));
+
+            // var subjectId = subject.GetSubjectId();
+
+            // var user = await _userManager.FindByIdAsync(subjectId);
+            // if (user == null)
+            //     throw new ArgumentException("Invalid subject identifier");
+
+            // var claims = await GetClaimsFromUser(user);
+
+           // var siteIdClaim = claims.FirstOrDefault(x => x.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
+            // context.IssuedClaims.Add(new Claim(JwtClaimTypes.Email, user.Email));
+            //// context.IssuedClaims.Add(new Claim("siteid", siteIdClaim.Value));
+            // context.IssuedClaims.Add(new Claim(JwtClaimTypes.Role, user.Roles));
+
+            // var roleClaims = claims.Where(x => x.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
+            // foreach (var roleClaim in roleClaims) {
+            //     context.IssuedClaims.Add(new Claim(JwtClaimTypes.Role, roleClaim.Value));
+            // }
         }
 
         public async Task IsActiveAsync(IsActiveContext context) {
@@ -70,7 +88,7 @@ namespace Manex.Authentication.Services.Identity {
 
             if (user != null) {
                 if (_userManager.SupportsUserSecurityStamp) {
-                    var security_stamp = subject.Claims.Where(c => c.Type == "security_stamp").Select(c => c.Value).SingleOrDefault();
+                    var security_stamp = subject.Claims.Where(c => c.Type == "security_stamp").Select(c => c.Value).FirstOrDefault();
                     if (security_stamp != null) {
                         var db_security_stamp = await _userManager.GetSecurityStampAsync(user);
                         if (db_security_stamp != security_stamp)

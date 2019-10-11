@@ -9,7 +9,7 @@ using System.Net.Http;
 using System.Text;
 
 
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
     public class ManexAuthorizeAttribute : AuthorizeAttribute, IAuthorizationFilter {
 
         private readonly List<string> _roles;
@@ -65,4 +65,3 @@ using System.Text;
 
         }
     }
-

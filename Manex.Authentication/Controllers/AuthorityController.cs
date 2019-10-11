@@ -1,6 +1,7 @@
 using Manex.Authentication.Contracts.Identity;
 using Manex.Authentication.Dto;
 using Manex.Authentication.Entities.Identity;
+using Manex.Authentication.Enum;
 using Manex.Authentication.Factory;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -28,12 +29,14 @@ namespace Manex.Authentication.Controllers {
     public class AuthorityController : Controller {
         private readonly IApplicationUserManager _applicationUserManager;
         private readonly IApplicationRoleManager _applicationRoleManager;
+
         private Dictionary<string, AuthorityIssuer> _issuers;
 
         public AuthorityController(IApplicationUserManager applicationUserManager,
             IApplicationSignInManager applicationSignInManager,
             IApplicationRoleManager applicationRoleManager,
             ILogger<AuthorityController> logger, IConfiguration configuration) {
+            var timout = configuration.GetValue<int>("Expire:AccessTokenLifetime");
             _applicationUserManager = applicationUserManager;
             _applicationRoleManager = applicationRoleManager;
             _issuers = new Dictionary<string, AuthorityIssuer>()
@@ -41,9 +44,11 @@ namespace Manex.Authentication.Controllers {
                 {
                     "owner",
                     AuthorityIssuer.Create(new AuthenticationAuthority(), "identity")
-                        .Register("account", new AccountAuthority(applicationUserManager))
-                        .Register("otp", new OTPAuthority(logger,configuration,applicationUserManager))
-                        .Register("login",new LoginAuthority(applicationUserManager,applicationSignInManager))
+                        .Register(VerifyEnum.account, new AccountAuthority(applicationUserManager),timout)
+                        .Register(VerifyEnum.otp, new OTPAuthority(logger,configuration,applicationUserManager),timout)
+                        .Register(VerifyEnum.login,new LoginAuthority(applicationUserManager,applicationSignInManager),timout)
+                        .Register(VerifyEnum.refreshToken,new RefreshTokenAuthority(),timout)
+
                 }
             };
         }
@@ -61,7 +66,7 @@ namespace Manex.Authentication.Controllers {
                 payload = jsonObject,
                 token = ""
             };
-            return await Auth("", model);
+            return Ok(await Auth(VerifyEnum.account, model));
         }
 
 
@@ -75,11 +80,10 @@ namespace Manex.Authentication.Controllers {
                 payload = jsonObject,
                 token = otpLoginDto.Token
             };
-            return await Auth("otp", model);
+            return Ok(await Auth(VerifyEnum.otp, model));
         }
 
         #endregion
-
 
         #region UserPassLogin
 
@@ -93,10 +97,9 @@ namespace Manex.Authentication.Controllers {
                 payload = jsonObject,
                 token = ""
             };
-            return await Auth("login", model);
+            return Ok(await Auth(VerifyEnum.login, model));
         }
         #endregion
-
 
         #region ForgotPassword
 
@@ -114,7 +117,7 @@ namespace Manex.Authentication.Controllers {
                 payload = jsonObject,
                 token = otpUpdatePassword.Token
             };
-            return await Auth("otp", model);
+            return Ok(await Auth(VerifyEnum.otp, model));
         }
 
         #endregion
@@ -161,7 +164,7 @@ namespace Manex.Authentication.Controllers {
 
         #endregion
 
-
+        #region Register
         [HttpPost("Register")]
         public async Task<IActionResult> Register(RegisterUserDto registerUserDto) {
 
@@ -180,7 +183,71 @@ namespace Manex.Authentication.Controllers {
 
             return Ok(new { Status = result });
         }
+        #endregion
 
+        #region RefreshToken
+        [HttpPost("RefreshToken")]
+        public async Task<IActionResult> RefreshToken(RefreshTokenDto refreshTokenDto) {
+
+            IEnumerable<KeyValuePair<string, string>> keyValuePairs = new Dictionary<string, string> {
+                            {"grant_type","refresh_token" },{"client_id","Authentication"},{"client_secret","clientsecret"},{"scope","api.sample offline_access"},{"refresh_token",refreshTokenDto.RefreshToken}
+                             };
+            var domin = ContextHelper.GetDomin();
+            AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
+
+            dynamic jsonObject = new JObject();
+
+            if (!string.IsNullOrWhiteSpace(accesToken.access_token)) {
+                AuthorityModel model = new AuthorityModel() {
+                    payload = jsonObject,
+                    token = accesToken.access_token
+                };
+                var resut = await Auth(VerifyEnum.refreshToken, model);
+                if (!resut.Status) {
+                    return FaildAccessToken();
+                }
+
+                accesToken.auth_token = StringCipher.Encrypt(resut.Data.verify_token);
+
+                return Ok(new ReturnDto() {
+                    Data = accesToken,
+                    ErrorData = null,
+                    Status = true
+                });
+            }
+
+            return Unauthorized();
+        }
+
+        [HttpPost("RefreshTokenWithoutAuthToken")]
+        public async Task<IActionResult> RefreshTokenWithoutAuthToken(RefreshTokenDto refreshTokenDto) {
+            IEnumerable<KeyValuePair<string, string>> keyValuePairs = new Dictionary<string, string> {
+                            {"grant_type","refresh_token" },{"client_id","Authentication"},{"client_secret","clientsecret"},{"scope","api.sample offline_access"},{"refresh_token",refreshTokenDto.RefreshToken}
+                             };
+            var domin = ContextHelper.GetDomin();
+            AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
+            return Ok(new ReturnDto() {
+                Data = accesToken,
+                ErrorData = null,
+                Status = true
+            });
+        }
+
+        private IActionResult FaildAccessToken() {
+            List<ErrorDto> errorData = new List<ErrorDto>();
+
+            errorData.Add(new ErrorDto() {
+                Description = ErrorKey.FaildAccessToken,
+                Key = nameof(ErrorKey.FaildAccessToken)
+            });
+
+            return Ok(new ReturnDto() {
+                Data = null,
+                ErrorData = errorData,
+                Status = false
+            });
+        }
+        #endregion
 
         #region ManexAuthorize Attribute api
 
@@ -192,7 +259,7 @@ namespace Manex.Authentication.Controllers {
             }
             var roles = _applicationRoleManager.GetRolesForUser(userId).Select(x => x.Name.ToUpper()).ToList();
 
-            if (!roles.Except(authorizeDto.roles).Any()) {
+            if (roles.Intersect(authorizeDto.roles).ToList().Any()) {
                 return Ok(true);
             }
             return Ok(false);
@@ -200,75 +267,92 @@ namespace Manex.Authentication.Controllers {
 
         #endregion
 
-
         #region Private
 
         [NonAction]
-        private async Task<IActionResult> Auth(string authority, AuthorityModel model) {
-            ReteurnDto @ret;
-            if (model == null || model?.payload == null)
-                return Unauthorized();
+        private async Task<ReturnDto> Auth(VerifyEnum authority, AuthorityModel model) {
+
+            ReturnDto ret;
             var authorities = _issuers["owner"].Authorities;
-            if (!authorities.Any())
-                return Unauthorized();
             string token = model.token;
-            if (string.IsNullOrWhiteSpace(authority)) {
-                authority = authorities.Keys.ToArray()[0];
-            }
+
             if (string.IsNullOrWhiteSpace(token)) {
                 token = JwtHelper.GenerateToken(new Claim[] { }, 60);
             }
-            if (string.IsNullOrWhiteSpace(token))
-                return Unauthorized();
+
             var principle = JwtHelper.GetClaimsPrincipal(token);
 
             if (principle?.Identity?.IsAuthenticated == true) {
                 try {
                     var claimsIdentity = principle.Identity as ClaimsIdentity;
                     var verifyResult = _issuers["owner"].Verify(authority, claimsIdentity.Claims.ToArray(), model.payload);
-                    if (verifyResult.Authority == null) {
-                        IEnumerable<KeyValuePair<string, string>> keyValuePairs = new Dictionary<string, string> {
-                            {"grant_type","authentication" },{"client_id","Authentication"},{"client_secret","clientsecret"},{"scope","api.sample offline_access"},{"auth_token",verifyResult.Token}
-                             };
-                        var domin = ContextHelper.GetDomin();
-                        AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
-                        accesToken.auth_token = StringCipher.Encrypt(verifyResult.Token);
 
-                        @ret = new ReteurnDto() {
-                            Data = accesToken,
-                            ErrorData = null,
-                            Status = true
-                        };
-                        return Ok(@ret);
-                    }
+                    ret = await ResultFactory(authority, verifyResult);
+                    return ret;
 
-                    @ret = new ReteurnDto() {
-                        Data = new { verify_token = verifyResult.Token, authority = verifyResult.Authority, parameters = verifyResult.Payload },
-                        ErrorData = null,
-                        Status = true
-                    };
-                    return Ok(@ret);
                 } catch (Exception exc) {
                     ret = ExceptionReturn(exc);
-                    return Ok(@ret);
+                    return ret;
                 }
             }
+            return TokenNotValid();
+        }
+
+        [NonAction]
+        private ReturnDto TokenNotValid() {
             List<ErrorDto> errorData = new List<ErrorDto>();
             errorData.Add(new ErrorDto() {
                 Description = ErrorKey.ExpireToken,
                 Key = nameof(ErrorKey.ExpireToken)
             });
-            @ret = new ReteurnDto() {
+            return new ReturnDto() {
                 Data = null,
                 ErrorData = errorData,
                 Status = false
             };
-            return Ok(@ret);
         }
 
-        private static ReteurnDto ExceptionReturn(Exception exc) {
-            ReteurnDto ret;
-            var key = exc.Data.Keys.Cast<Gp_Error>().Single();
+        private async Task<ReturnDto> ResultFactory(VerifyEnum authority, IssuerVerifyResult verifyResult) {
+            ReturnDto ret = new ReturnDto();
+            switch (authority) {
+                case VerifyEnum.account:
+                case VerifyEnum.refreshToken:
+                    ret = AccountResult(verifyResult);
+                    break;
+                case VerifyEnum.otp:
+                case VerifyEnum.login:
+                    ret = await OtpAndUserResult(verifyResult);
+                    break;
+            }
+            return ret;
+        }
+
+        private static async Task<ReturnDto> OtpAndUserResult(IssuerVerifyResult verifyResult) {
+            IEnumerable<KeyValuePair<string, string>> keyValuePairs = new Dictionary<string, string> {
+                            {"grant_type","authentication" },{"client_id","Authentication"},{"client_secret","clientsecret"},{"scope","api.sample offline_access"},{"auth_token",verifyResult.Token}
+                             };
+            var domin = ContextHelper.GetDomin();
+            AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
+            accesToken.auth_token = StringCipher.Encrypt(verifyResult.Token);
+
+            return new ReturnDto() {
+                Data = accesToken,
+                ErrorData = null,
+                Status = true
+            };
+        }
+
+        private ReturnDto AccountResult(IssuerVerifyResult verifyResult) {
+            return new ReturnDto() {
+                Data = new { verify_token = verifyResult.Token },
+                ErrorData = null,
+                Status = true
+            };
+        }
+
+        private static ReturnDto ExceptionReturn(Exception exc) {
+            ReturnDto ret;
+            var key = exc.Data.Keys.Cast<Gp_Error>().FirstOrDefault();
             List<ErrorDto> errorData = new List<ErrorDto>();
 
             switch (key) {
@@ -290,7 +374,7 @@ namespace Manex.Authentication.Controllers {
                     break;
             }
 
-            @ret = new ReteurnDto() {
+            @ret = new ReturnDto() {
                 Data = null,
                 ErrorData = errorData,
                 Status = false
@@ -313,17 +397,6 @@ namespace Manex.Authentication.Controllers {
         }
 
         #endregion
-    }
-
-    public class ReteurnDto {
-        public bool Status { get; set; }
-        public List<ErrorDto> ErrorData { get; set; }
-        public dynamic Data { get; set; }
-    }
-
-    public class ErrorDto {
-        public string Key { get; set; }
-        public string Description { get; set; }
     }
 
 }

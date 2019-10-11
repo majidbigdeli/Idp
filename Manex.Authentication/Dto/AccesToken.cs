@@ -1,4 +1,4 @@
-﻿namespace Manex.Authentication.Dto {
+namespace Manex.Authentication.Dto {
     public class AccesToken {
         public string access_token { get; set; }
         public string auth_token { get; set; }
