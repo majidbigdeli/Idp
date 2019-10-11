@@ -15,6 +15,7 @@ namespace WebApplication2.Controllers
 
         // [ManexAuthorize(new string[] {"user"})] //  به بزرگی و کوچیکی حروف حساس نیست از طریق api call
         //[ManexWithoutApiCallAuthorize(new string[] { "admin","lll"})] //  به بزرگی و کوچیکی حروف حساس نیست
+        // [Authorize(Roles = "Admin,user")] به بزرگی و کوچیکی حروف حساس است
         [Authorize(Roles = "Admin")] // به بزرگی و کوچیکی حروف حساس است
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
