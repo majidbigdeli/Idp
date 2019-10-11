@@ -2,7 +2,6 @@ using Manex.Authentication.Contracts.Identity;
 using Manex.Authentication.Dto;
 using Manex.Authentication.Entities.Identity;
 using Manex.Authentication.Factory;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -10,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -155,7 +153,7 @@ namespace Manex.Authentication.Controllers {
         [HttpPost("SetUserRole")]
         public async Task<IActionResult> SetUserRole(SetUserRoles setUserRoles) {
 
-         var result = await  _applicationUserManager.SetUserRole(setUserRoles.UserId, setUserRoles.RoleIds);
+            var result = await _applicationUserManager.SetUserRole(setUserRoles.UserId, setUserRoles.RoleIds);
 
             return Ok(new { Status = result });
         }
@@ -207,6 +205,7 @@ namespace Manex.Authentication.Controllers {
 
         [NonAction]
         private async Task<IActionResult> Auth(string authority, AuthorityModel model) {
+            ReteurnDto @ret;
             if (model == null || model?.payload == null)
                 return Unauthorized();
             var authorities = _issuers["owner"].Authorities;
@@ -234,18 +233,69 @@ namespace Manex.Authentication.Controllers {
                         var domin = ContextHelper.GetDomin();
                         AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
                         accesToken.auth_token = StringCipher.Encrypt(verifyResult.Token);
-                        return Ok(accesToken);
 
-
+                        @ret = new ReteurnDto() {
+                            Data = accesToken,
+                            ErrorData = null,
+                            Status = true
+                        };
+                        return Ok(@ret);
                     }
-                    return Ok(new { verify_token = verifyResult.Token, authority = verifyResult.Authority, parameters = verifyResult.Payload });
-                } catch (Exception e) {
-                    return Unauthorized();
+
+                    @ret = new ReteurnDto() {
+                        Data = new { verify_token = verifyResult.Token, authority = verifyResult.Authority, parameters = verifyResult.Payload },
+                        ErrorData = null,
+                        Status = true
+                    };
+                    return Ok(@ret);
+                } catch (Exception exc) {
+                    ret = ExceptionReturn(exc);
+                    return Ok(@ret);
                 }
             }
+            List<ErrorDto> errorData = new List<ErrorDto>();
+            errorData.Add(new ErrorDto() {
+                Description = ErrorKey.ExpireToken,
+                Key = nameof(ErrorKey.ExpireToken)
+            });
+            @ret = new ReteurnDto() {
+                Data = null,
+                ErrorData = errorData,
+                Status = false
+            };
+            return Ok(@ret);
+        }
 
-            return Unauthorized();
+        private static ReteurnDto ExceptionReturn(Exception exc) {
+            ReteurnDto ret;
+            var key = exc.Data.Keys.Cast<Gp_Error>().Single();
+            List<ErrorDto> errorData = new List<ErrorDto>();
 
+            switch (key) {
+                case Gp_Error.IdentityResultFaild:
+                    var statusMessage = exc.Data[key] as List<IdentityError>;
+                    foreach (var item in statusMessage) {
+                        errorData.Add(new ErrorDto() {
+                            Description = item.Description,
+                            Key = item.Code
+                        });
+                    }
+                    break;
+                case Gp_Error.Unknown:
+                default:
+                    errorData.Add(new ErrorDto() {
+                        Description = exc.Message,
+                        Key = nameof(ErrorKey.Unknown)
+                    });
+                    break;
+            }
+
+            @ret = new ReteurnDto() {
+                Data = null,
+                ErrorData = errorData,
+                Status = false
+            };
+            return ret;
         }
 
         private long GetUserIdFromAuthToken(string encriptToken) {
@@ -263,6 +313,17 @@ namespace Manex.Authentication.Controllers {
         }
 
         #endregion
+    }
+
+    public class ReteurnDto {
+        public bool Status { get; set; }
+        public List<ErrorDto> ErrorData { get; set; }
+        public dynamic Data { get; set; }
+    }
+
+    public class ErrorDto {
+        public string Key { get; set; }
+        public string Description { get; set; }
     }
 
 }

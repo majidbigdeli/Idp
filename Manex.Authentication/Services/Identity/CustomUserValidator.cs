@@ -43,16 +43,7 @@ namespace Manex.Authentication.Services.Identity
 
             return !errors.Any() ? IdentityResult.Success : IdentityResult.Failed(errors.ToArray());
         }
-
-
-
-
-
-
-
-
-
-
+                                    
 
         private void validateEmail(User user, List<IdentityError> errors)
         {

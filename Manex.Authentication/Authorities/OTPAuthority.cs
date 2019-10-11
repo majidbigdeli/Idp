@@ -8,6 +8,8 @@ using System.Security.Claims;
 using Manex.Authentication.Utility;
 using Microsoft.Extensions.Configuration;
 using Manex.Authentication.Contracts.Identity;
+using Manex.Authentication;
+using Microsoft.AspNetCore.Identity;
 
 namespace WebIddentityServer4.Authorities {
     public class OTPAuthority : IAuthority {
@@ -38,7 +40,6 @@ namespace WebIddentityServer4.Authorities {
             {
                 new Claim("otp_id", sid),
                 new Claim("otp_hash", hash),
-                new Claim("phone",phone)
             };
         }
 
@@ -48,20 +49,23 @@ namespace WebIddentityServer4.Authorities {
         }
 
         public Claim[] OnVerify(Claim[] claims, JObject payload, string identifier, out bool valid) {
+            Exception ex;
             valid = false;
             var id = claims.Single(c => c.Type == identifier).Value;
             var otpId = claims.Single(c => c.Type == "otp_id").Value;
             var hash = claims.Single(c => c.Type == "otp_hash").Value;
             if (string.Format("{0}:{1}", otpId, payload["otp"].ToString()).Sha256() == hash) {
 
-                if (!string.IsNullOrWhiteSpace(payload["password"].ToString())) {
+                if (!string.IsNullOrWhiteSpace(payload["password"]?.ToString())) {
                     var phone = claims.Single(c => c.Type == "phone").Value;
                     var user = _applicationUserManager.FindByNameAsync(phone).Result;
 
-                   var result =  _applicationUserManager.ChangePasswordAsync(user, payload["password"].ToString()).Result;
+                    var result = _applicationUserManager.ChangePasswordAsync(user, payload["password"].ToString()).Result;
 
                     if (!result.Succeeded) {
-                        throw new KeyNotFoundException();
+                         ex = new Exception();
+                        ex.Data.Add(Gp_Error.IdentityResultFaild, result.Errors.ToList());
+                        throw ex;
                     }
                 }
 
@@ -71,7 +75,16 @@ namespace WebIddentityServer4.Authorities {
                 new Claim(identifier, id)
                 };
             }
-            throw new ArgumentException();
+             ex = new Exception();
+            List<IdentityError> errors = new List<IdentityError>();
+            errors.Add(new IdentityError {
+                Code = nameof(ErrorKey.OtpCodeNotValid),
+                Description = ErrorKey.OtpCodeNotValid
+            });
+            ex.Data.Add(Gp_Error.IdentityResultFaild, errors); 
+
+            throw ex;
+
         }
     }
 }

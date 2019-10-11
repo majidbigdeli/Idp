@@ -1,10 +1,11 @@
+using Manex.Authentication;
 using Manex.Authentication.Contracts.Identity;
 using Manex.Authentication.Entities.Identity;
+using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
-using WebIddentityServer4.Repositories;
 
 namespace WebIddentityServer4.Authorities {
     public class AccountAuthority : IAuthority {
@@ -32,7 +33,15 @@ namespace WebIddentityServer4.Authorities {
                 }).Result;
 
                 if (user.Id == default(long)) {
-                    throw new KeyNotFoundException();
+
+                    Exception ex = new Exception();
+                    List<IdentityError> errors = new List<IdentityError>();
+                    errors.Add(new IdentityError {
+                        Code = nameof(ErrorKey.CreateUserFaild),
+                        Description = ErrorKey.CreateUserFaild
+                    });
+                    ex.Data.Add(Gp_Error.IdentityResultFaild, errors);
+                    throw ex;
                 } }
 
             valid = true;
