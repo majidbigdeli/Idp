@@ -4,20 +4,28 @@ using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace WebIddentityServer4.Helpers {
     public class JwtHelper {
         private static string Secret = "jwtsecret".Sha256();
-
+        private static RSA _rsa;
+        
         public static string GenerateToken(Claim[] claims, int timeout) {
             var symmetricKey = Convert.FromBase64String(Secret);
             var tokenHandler = new JwtSecurityTokenHandler();
+            _rsa = new RSACryptoServiceProvider(2048);        
 
             var now = DateTime.UtcNow;
             var tokenDescriptor = new SecurityTokenDescriptor {
                 Subject = new ClaimsIdentity(claims),
                 Expires = now.AddSeconds(timeout),
-                SigningCredentials = new SigningCredentials(RsaSecurityKeyManager.getInstance(), SecurityAlgorithms.RsaSha256)
+//                SigningCredentials = new SigningCredentials(RsaSecurityKeyManager.getInstance(), 
+//                    SecurityAlgorithms.Aes256CbcHmacSha512/*RsaSha256*/)
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Secret)), 
+                    SecurityAlgorithms.HmacSha256Signature)
             };
 
             var stoken = tokenHandler.CreateToken(tokenDescriptor);

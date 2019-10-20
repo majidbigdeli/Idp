@@ -3,8 +3,8 @@ using System;
 using Manex.Authentication.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Manex.Authentication.Migrations
 {
@@ -15,15 +15,14 @@ namespace Manex.Authentication.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)
                 .HasAnnotation("ProductVersion", "2.2.6-servicing-10079")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128)
-                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.AppDataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("FriendlyName");
 
@@ -32,8 +31,7 @@ namespace Manex.Authentication.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FriendlyName")
-                        .IsUnique()
-                        .HasFilter("[FriendlyName] IS NOT NULL");
+                        .IsUnique();
 
                     b.ToTable("AppDataProtectionKeys");
                 });
@@ -41,8 +39,7 @@ namespace Manex.Authentication.Migrations
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.AppLogItem", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("CreatedByBrowserName")
                         .HasMaxLength(1000);
@@ -107,8 +104,7 @@ namespace Manex.Authentication.Migrations
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.Role", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken();
@@ -145,8 +141,7 @@ namespace Manex.Authentication.Migrations
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
+                        .HasName("RoleNameIndex");
 
                     b.ToTable("AppRoles");
                 });
@@ -154,8 +149,7 @@ namespace Manex.Authentication.Migrations
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.RoleClaim", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("ClaimType");
 
@@ -193,8 +187,7 @@ namespace Manex.Authentication.Migrations
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.User", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .ValueGeneratedOnAdd();
 
                     b.Property<int>("AccessFailedCount");
 
@@ -277,8 +270,7 @@ namespace Manex.Authentication.Migrations
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+                        .HasName("UserNameIndex");
 
                     b.ToTable("AppUsers");
                 });
@@ -286,8 +278,7 @@ namespace Manex.Authentication.Migrations
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.UserClaim", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("ClaimType");
 
@@ -430,8 +421,7 @@ namespace Manex.Authentication.Migrations
             modelBuilder.Entity("Manex.Authentication.Entities.Identity.UserUsedPassword", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .ValueGeneratedOnAdd();
 
                     b.Property<string>("CreatedByBrowserName")
                         .HasMaxLength(1000);

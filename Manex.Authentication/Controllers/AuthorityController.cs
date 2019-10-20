@@ -57,16 +57,23 @@ namespace Manex.Authentication.Controllers {
         #region OtpLogin
 
         [HttpPost("GetOtp")]
-        public async Task<IActionResult> GetOtp(OtpDto otpDto) {
-
+        public async Task<IActionResult> GetOtp(OtpDto otpDto)
+        {
             dynamic jsonObject = new JObject();
-            jsonObject.phone = otpDto.Phone;
+            try
+            {
+                jsonObject.phone = otpDto.Phone;
 
-            AuthorityModel model = new AuthorityModel() {
-                payload = jsonObject,
-                token = ""
-            };
-            return Ok(await Auth(VerifyEnum.account, model));
+                AuthorityModel model = new AuthorityModel() {
+                    payload = jsonObject,
+                    token = ""
+                    };
+                return Ok(await Auth(VerifyEnum.account, model));
+            }
+            catch (Exception e)
+            {
+                return Ok(e.Message);
+            }
         }
 
 
@@ -338,7 +345,7 @@ namespace Manex.Authentication.Controllers {
             string token = model.token;
 
             if (string.IsNullOrWhiteSpace(token)) {
-                token = JwtHelper.GenerateToken(new Claim[] { }, 60);
+                token = JwtHelper.GenerateToken(new Claim[] { }, 660);
             }
 
             var principle = JwtHelper.GetClaimsPrincipal(token);
