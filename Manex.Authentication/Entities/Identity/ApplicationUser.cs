@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Entities.AuditableEntity;
+using Manex.Authentication.Entities.AuditableEntity;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -37,6 +37,7 @@ namespace Manex.Authentication.Entities.Identity
         public override string PhoneNumber { get => this.UserName; set => value = this.UserName ;}
 
 
+
         [Required]
         public override string UserName { get; set; }
 
@@ -54,6 +55,10 @@ namespace Manex.Authentication.Entities.Identity
         public string Location { set; get; }
 
         public bool IsActive { get; set; } = true;
+
+        public override string NormalizedUserName { get => this.UserName.ToUpper(); set => value = this.UserName.ToUpper(); }
+        public override string NormalizedEmail { get => this.Email?.ToUpper(); set => value = this.Email?.ToUpper(); }
+
 
         public virtual ICollection<UserUsedPassword> UserUsedPasswords { get; set; }
 

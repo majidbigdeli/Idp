@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Entities.AuditableEntity;
+using Manex.Authentication.Entities.AuditableEntity;
 using Microsoft.AspNetCore.Identity;
 
 namespace Manex.Authentication.Entities.Identity
@@ -7,6 +7,7 @@ namespace Manex.Authentication.Entities.Identity
     {
         public virtual User User { get; set; }
     }
+
 
 
 

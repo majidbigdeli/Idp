@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Entities.AuditableEntity;
+using Manex.Authentication.Entities.AuditableEntity;
 using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 

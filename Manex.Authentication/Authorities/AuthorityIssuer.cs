@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Manex.Authentication.Enum;
+using Manex.Authentication.Factory;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,10 +13,10 @@ namespace WebIddentityServer4.Authorities
     {
         private string _identifier;
         private IAuthenticator _authenticator;
-        private IDictionary<string, IAuthority> _authorities = new Dictionary<string, IAuthority>();
-        private IDictionary<string, int> _timeouts = new Dictionary<string, int>();
+        private IDictionary<VerifyEnum, IAuthority> _authorities = new Dictionary<VerifyEnum, IAuthority>();
+        private IDictionary<VerifyEnum, int> _timeouts = new Dictionary<VerifyEnum, int>();
 
-        public IDictionary<string, IAuthority> Authorities
+        public IDictionary<VerifyEnum, IAuthority> Authorities
         {
             get { return _authorities; }
         }
@@ -29,63 +31,39 @@ namespace WebIddentityServer4.Authorities
             return new AuthorityIssuer(authenticator, identifier);
         }
 
-        internal void Register(IAuthority authority, string name, int timeout)
+        internal void Register(IAuthority authority, VerifyEnum name, int timeout)
         {
             _authorities.Add(name, authority);
             _timeouts.Add(name, timeout);
         }
 
-        public IssuerVerifyResult Verify(string authority, Claim[] claims, JObject payload)
+        public IssuerVerifyResult Verify(VerifyEnum authority, Claim[] claims, JObject payload)
         {
             var verifyAuthority = _authorities[authority];
             var verifyClaims = verifyAuthority.OnVerify(claims, payload, _identifier, out bool valid);
-            var authorities = _authorities.Values.ToList();
-            var idx = authorities.IndexOf(verifyAuthority);
 
-  
+            IVerifyFactory verifyFactory;
+            IssuerVerifyResult issuerVerifyResult = new IssuerVerifyResult();
+            switch (authority) {
+                case VerifyEnum.account:
+                    verifyFactory = new VerifyAccountFactory().Create(_authenticator);
+                    issuerVerifyResult = verifyFactory.Register(_authorities, verifyClaims, _identifier, _timeouts[VerifyEnum.account]);
+                    break;
+                case VerifyEnum.otp:
+                    verifyFactory = new AuthAccountFactory().Create(_authenticator);
+                    issuerVerifyResult = verifyFactory.Register(_authorities, verifyClaims, _identifier, _timeouts[VerifyEnum.otp]);
+                    break;
+                case VerifyEnum.login:
+                    verifyFactory = new AuthAccountFactory().Create(_authenticator);
+                    issuerVerifyResult = verifyFactory.Register(_authorities, verifyClaims, _identifier, _timeouts[VerifyEnum.login]);
+                    break;
+                case VerifyEnum.refreshToken:
+                    verifyFactory = new AuthAccountFactory().Create(_authenticator);
+                    issuerVerifyResult = verifyFactory.Register(_authorities, verifyClaims, _identifier, _timeouts[VerifyEnum.refreshToken]);
+                    break;
+            }
+            return issuerVerifyResult;
 
-            if (verifyAuthority is AccountAuthority)
-            {
-                var nextAuthority = authorities[idx + 1];
-                var forwardClaims = new Claim[] { };
-                var forwardAuthority = _authorities.Keys.ElementAt(idx + 1);
-                var forwardPayload = nextAuthority.Payload;
-                if (verifyClaims.Any())
-                {
-                    forwardClaims = nextAuthority.OnForward(verifyClaims);
-                }
-                if (valid)
-                {
-                    var verifyToken = JwtHelper.GenerateToken(verifyClaims.Concat(forwardClaims).ToArray(), _timeouts[authority]);
-                    return new IssuerVerifyResult()
-                    {
-                        Token = verifyToken,
-                        Authority = forwardAuthority,
-                        Payload = forwardPayload
-                    };
-                }
-            }
-            else
-            {
-                if (valid)
-                {
-                    var identifier = verifyClaims.SingleOrDefault(c => c.Type == _identifier);
-                    var authenticationClaims = _authenticator.GetAuthenticationClaims(identifier.Value);
-                    return new IssuerVerifyResult()
-                    {
-                        Token = JwtHelper.GenerateToken(authenticationClaims, _timeouts[authority]),
-                        Authority = null,
-                        Payload = null
-                    };
-                }
-            }
-            var token = JwtHelper.GenerateToken(verifyClaims, _timeouts[authority]);
-            return new IssuerVerifyResult()
-            {
-                Token = token,
-                Authority = authority,
-                Payload = verifyAuthority.Payload
-            };
         }
     }
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -66,7 +66,7 @@ namespace Manex.Authentication.Controllers
             _logger = logger;
         }
 
-        [Authorize]
+        [ManexAuthorize]
         [HttpPost("[action]")]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Log()
@@ -103,5 +103,6 @@ namespace Manex.Authentication.Controllers
 
             return Ok();
         }
+
     }
 }

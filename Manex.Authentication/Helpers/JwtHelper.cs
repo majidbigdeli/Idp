@@ -1,4 +1,4 @@
-﻿using IdentityServer4.Models;
+using IdentityServer4.Models;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -19,7 +19,7 @@ namespace WebIddentityServer4.Helpers
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = now.AddMinutes(timeout),
+                Expires = now.AddSeconds(timeout),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(symmetricKey), SecurityAlgorithms.HmacSha256Signature)
             };
 

@@ -1,4 +1,4 @@
-﻿using Manex.Authentication.Entities.Identity;
+using Manex.Authentication.Entities.Identity;
 using Manex.Authentication.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -92,6 +92,7 @@ namespace Manex.Authentication.Contracts.Identity
         /// The <see cref="Task"/> that represents the asynchronous operation.
         /// </returns>
         Task<IdentityResult> CreateAsync(Role role);
+
 
         /// <summary>
         /// Deletes the specified <paramref name="role"/>.

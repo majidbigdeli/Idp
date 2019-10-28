@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Manex.Authentication.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20190921163155_Init")]
-    partial class Init
+    [Migration("20191020073019_initialManexInLocal")]
+    partial class initialManexInLocal
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

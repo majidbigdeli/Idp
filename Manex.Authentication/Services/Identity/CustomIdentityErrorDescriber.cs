@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace Manex.Authentication.Services.Identity
 {
@@ -84,7 +84,7 @@ namespace Manex.Authentication.Services.Identity
             return new IdentityError
             {
                 Code = nameof(InvalidUserName),
-                Description = string.Format("نام کاربری '{0}' معتبر نیست و تنها می‌تواند حاوی حروف و یا ارقام باشد.", userName)
+                Description = string.Format("نام کاربری '{0}' معتبر نیست .", userName)
             };
         }
 
