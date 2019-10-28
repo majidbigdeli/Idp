@@ -58,19 +58,20 @@ namespace Manex.Authentication {
             });
 
 
-            services.AddIdentityServer(options => {
-                options.Events.RaiseErrorEvents = true;
-                options.Events.RaiseInformationEvents = true;
-                options.Events.RaiseFailureEvents = true;
-                options.Events.RaiseSuccessEvents = true;
-            })
-        //.AddDeveloperSigningCredential()
-        .AddInMemoryIdentityResources(GetIdentityResources())
-        .AddInMemoryApiResources(GetApiResources())
-        .AddInMemoryClients(GetClients(siteSettings))
-        .AddExtensionGrantValidator<AuthenticationGrant>()
-        .AddProfileService<AspNetIdentityProfileService>()
-        .AddSigningCredential(new SigningCredentials(RsaSecurityKeyManager.getInstance(), SecurityAlgorithms.RsaSha256));
+            services.AddIdentityServer(options =>
+                {
+                    options.Events.RaiseErrorEvents = true;
+                    options.Events.RaiseInformationEvents = true;
+                    options.Events.RaiseFailureEvents = true;
+                    options.Events.RaiseSuccessEvents = true;
+                })
+                .AddDeveloperSigningCredential()
+                .AddInMemoryIdentityResources(GetIdentityResources())
+                .AddInMemoryApiResources(GetApiResources())
+                .AddInMemoryClients(GetClients(siteSettings))
+                .AddExtensionGrantValidator<AuthenticationGrant>()
+                .AddProfileService<AspNetIdentityProfileService>();
+                //.AddSigningCredential(new SigningCredentials(RsaSecurityKeyManager.getInstance(), SecurityAlgorithms.RsaSha256));
 
             services.AddDbContextPool<ApplicationDbContext>((serviceProvider, optionsBuilder) => {
                 optionsBuilder.SetDbContextOptions(siteSettings);

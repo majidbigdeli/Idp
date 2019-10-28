@@ -17,20 +17,31 @@ namespace Manex.Authentication.Factory {
 
         private readonly RegisterUserDto _user;
         private readonly IApplicationUserManager _applicationUserManager;
+        private readonly IApplicationRoleManager _applicationRoleManager;
 
-        public RegisterUserWithPassword(RegisterUserDto user, IApplicationUserManager applicationUserManager) {
+        public RegisterUserWithPassword(RegisterUserDto user, IApplicationUserManager applicationUserManager, IApplicationRoleManager applicationRoleManager) {
             _user = user;
             _applicationUserManager = applicationUserManager;
-
+            _applicationRoleManager = applicationRoleManager;
         }
-        public async Task<IdentityResult> Register() {
-            var res = await _applicationUserManager.CreateAsync(new User {
+        public async Task<IdentityResult> Register()
+        {
+            var user = new User
+            {
                 UserName = _user.Phone,
                 FirstName = _user.FirstName,
                 LastName = _user.LastName,
                 Email = _user.Email,
-                IsActive = true
-            }, _user.Password);
+                IsActive = true,
+            };
+            var res = await _applicationUserManager.CreateAsync(user, _user.Password);
+
+            var role = await _applicationRoleManager.FindByNameAsync("User");
+            var listRoleId = new List<long>();
+            listRoleId.Add(role.Id);
+            await _applicationUserManager.SetUserRole(user.Id, listRoleId);
+            
+            
 
             return res;
         }
@@ -40,9 +51,11 @@ namespace Manex.Authentication.Factory {
 
         private readonly RegisterUserDto _user;
         private readonly IApplicationUserManager _applicationUserManager;
-        public RegisterUserWithoutPassword(RegisterUserDto user, IApplicationUserManager applicationUserManager) {
+        private readonly IApplicationRoleManager _applicationRoleManager;
+        public RegisterUserWithoutPassword(RegisterUserDto user, IApplicationUserManager applicationUserManager, IApplicationRoleManager applicationRoleManager) {
             _user = user;
             _applicationUserManager = applicationUserManager;
+            _applicationRoleManager = applicationRoleManager;
         }
 
         public async Task<IdentityResult> Register() {
@@ -54,21 +67,28 @@ namespace Manex.Authentication.Factory {
                 IsActive = true
             };
             var result = await _applicationUserManager.CreateUserAsync(user);
+            
+            var role = await _applicationRoleManager.FindByNameAsync("User");
+            var listRoleId = new List<long>();
+            listRoleId.Add(role.Id);
+            await _applicationUserManager.SetUserRole(user.Id, listRoleId);
 
             return result;
         }
     }
 
     public abstract class RegisterUserFactory {
-        public abstract IRegisterUserFactory Create(RegisterUserDto user, IApplicationUserManager applicationUserManager);
+        public abstract IRegisterUserFactory Create(RegisterUserDto user, IApplicationUserManager applicationUserManager,IApplicationRoleManager applicationRoleManager);
     }
 
     public class RegisterUserWithPasswordFactory : RegisterUserFactory {
-        public override IRegisterUserFactory Create(RegisterUserDto user, IApplicationUserManager applicationUserManager) => new RegisterUserWithPassword(user, applicationUserManager);
+        public override IRegisterUserFactory Create(RegisterUserDto user, IApplicationUserManager applicationUserManager,IApplicationRoleManager applicationRoleManager)
+            => new RegisterUserWithPassword(user, applicationUserManager,applicationRoleManager);
     }
 
     public class RegisterUserWithoutPasswordFactory : RegisterUserFactory {
-        public override IRegisterUserFactory Create(RegisterUserDto user, IApplicationUserManager applicationUserManager) => new RegisterUserWithoutPassword(user, applicationUserManager);
+        public override IRegisterUserFactory Create(RegisterUserDto user, IApplicationUserManager applicationUserManager,IApplicationRoleManager applicationRoleManager)
+            => new RegisterUserWithoutPassword(user, applicationUserManager,applicationRoleManager);
     }
 
     public class RegisterUserDto {

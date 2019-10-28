@@ -50,7 +50,7 @@ namespace Manex.Authentication.Services.Identity {
             var claims = principal.Claims.ToList();
 
             //Add more claims like this
-            //claims.Add(new System.Security.Claims.Claim("MyProfileID", user.Id));
+            claims.Add(new System.Security.Claims.Claim("username", user.UserName));
 
             context.IssuedClaims = claims;
 
@@ -132,7 +132,7 @@ namespace Manex.Authentication.Services.Identity {
 
             if (_userManager.SupportsUserRole) {
                 var roles = await _userManager.GetRolesAsync(user);
-                claims.AddRange(roles.Select(role => new Claim(JwtClaimTypes.Role, role)));
+                claims.AddRange(roles.Select(role => new Claim(ClaimTypes.NameIdentifier, role)));
             }
 
             return claims;

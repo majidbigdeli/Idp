@@ -29,6 +29,7 @@ namespace Manex.Authentication.Controllers {
     public class AuthorityController : Controller {
         private readonly IApplicationUserManager _applicationUserManager;
         private readonly IApplicationRoleManager _applicationRoleManager;
+        private readonly int _timeout;
 
         private Dictionary<string, AuthorityIssuer> _issuers;
 
@@ -36,7 +37,7 @@ namespace Manex.Authentication.Controllers {
             IApplicationSignInManager applicationSignInManager,
             IApplicationRoleManager applicationRoleManager,
             ILogger<AuthorityController> logger, IConfiguration configuration) {
-            var timout = configuration.GetValue<int>("Expire:AccessTokenLifetime");
+             _timeout = configuration.GetValue<int>("Expire:VerifyNumberLifeTime");
             _applicationUserManager = applicationUserManager;
             _applicationRoleManager = applicationRoleManager;
             _issuers = new Dictionary<string, AuthorityIssuer>()
@@ -44,10 +45,10 @@ namespace Manex.Authentication.Controllers {
                 {
                     "owner",
                     AuthorityIssuer.Create(new AuthenticationAuthority(), "identity")
-                        .Register(VerifyEnum.account, new AccountAuthority(applicationUserManager),timout)
-                        .Register(VerifyEnum.otp, new OTPAuthority(logger,configuration,applicationUserManager),timout)
-                        .Register(VerifyEnum.login,new LoginAuthority(applicationUserManager,applicationSignInManager),timout)
-                        .Register(VerifyEnum.refreshToken,new RefreshTokenAuthority(),timout)
+                        .Register(VerifyEnum.account, new AccountAuthority(applicationUserManager),_timeout)
+                        .Register(VerifyEnum.otp, new OTPAuthority(logger,configuration,applicationUserManager),_timeout)
+                        .Register(VerifyEnum.login,new LoginAuthority(applicationUserManager,applicationSignInManager),_timeout)
+                        .Register(VerifyEnum.refreshToken,new RefreshTokenAuthority(),_timeout)
 
                 }
             };
@@ -130,30 +131,32 @@ namespace Manex.Authentication.Controllers {
         #endregion
 
         #region PasswordChange
-        [ManexAuthorize] // دصورت استفاده ار این اتریبیوت باید  auth_token در هدر ست شود
-        [HttpPost("ChangePassword")]
-        public async Task<IActionResult> ChangePassword(ChangePasswordDto changePasswordDto) {
-            string auth_token = Request.Headers["Authroize"].ToString();
-            long userId = GetUserIdFromAuthToken(auth_token);
-            if (userId == default(long)) {
-                return RefreshTokenAuthNotVaild();
-            }
-            var result = await _applicationUserManager.ChangePasswordAsync(_applicationUserManager.FindById(userId), changePasswordDto.CurrentPassword, changePasswordDto.NewPassword);
-            if (!result.Succeeded) {
-                return RefreshTokenResultFaild(result);
-            }
-            return Ok(new ReturnDto() {
-                Data = null,
-                ErrorData = null,
-                Status = true
-            });
-        }
+//        [ManexAuthorize] // دصورت استفاده ار این اتریبیوت باید  auth_token در هدر ست شود
+//        [HttpPost("ChangePassword")]
+//        public async Task<IActionResult> ChangePassword(ChangePasswordDto changePasswordDto) {
+//            string auth_token = Request.Headers["Authroize"].ToString();
+//            long userId = GetUserIdFromAuthToken(auth_token);
+//            if (userId == default(long)) {
+//                return RefreshTokenAuthNotVaild();
+//            }
+//            var result = await _applicationUserManager.ChangePasswordAsync(_applicationUserManager.FindById(userId), changePasswordDto.CurrentPassword, changePasswordDto.NewPassword);
+//            if (!result.Succeeded) {
+//                return RefreshTokenResultFaild(result);
+//            }
+//            return Ok(new ReturnDto() {
+//                Data = null,
+//                ErrorData = null,
+//                Status = true
+//            });
+//        }
 
 
         [ManexWithoutApiCallAuthorize] // دصورت استفاده ار این اتریبیوت باید  auth_token در هدر ست شود
-        [HttpPost("ChangePasswordDefault")]
-        public async Task<IActionResult> ChangePasswordDefault(ChangePasswordDto changePasswordDto) {
+        [HttpPost("ChangePassword")]//ChangePasswordDefault
+        public async Task<IActionResult> ChangePassword(ChangePasswordDto changePasswordDto) {
             long userId = long.Parse(HttpContext.User.Claims.Where(x => x.Type == ClaimTypes.NameIdentifier).FirstOrDefault().Value);
+            //sample for getting custom claims
+//            var username = HttpContext.User.Claims.FirstOrDefault(x => x.Type == "username").Value;
             if (userId == default(long)) {
                 return RefreshTokenAuthNotVaild();
             }
@@ -221,11 +224,11 @@ namespace Manex.Authentication.Controllers {
             IdentityResult result = new IdentityResult();
             switch (string.IsNullOrWhiteSpace(registerUserDto.Password)) {
                 case true:
-                    factory = new RegisterUserWithoutPasswordFactory().Create(registerUserDto, _applicationUserManager);
+                    factory = new RegisterUserWithoutPasswordFactory().Create(registerUserDto, _applicationUserManager,_applicationRoleManager);
                     result = await factory.Register();
                     break;
                 case false:
-                    factory = new RegisterUserWithPasswordFactory().Create(registerUserDto, _applicationUserManager);
+                    factory = new RegisterUserWithPasswordFactory().Create(registerUserDto, _applicationUserManager,_applicationRoleManager);
                     result = await factory.Register();
                     break;
             }
@@ -254,45 +257,45 @@ namespace Manex.Authentication.Controllers {
         #endregion
 
         #region RefreshToken
+//        [HttpPost("RefreshTokenWithAuthToken")]
+//        public async Task<IActionResult> RefreshTokenWithAuthToken(RefreshTokenDto refreshTokenDto) {
+//
+//            IEnumerable<KeyValuePair<string, string>> keyValuePairs = new Dictionary<string, string> {
+//                            {"grant_type","refresh_token" },{"client_id","Authentication"},{"client_secret","clientsecret"},{"scope","api.sample offline_access"},{"refresh_token",refreshTokenDto.RefreshToken}
+//                             };
+//            var domin = ContextHelper.GetDomin();
+//            AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
+//
+//            dynamic jsonObject = new JObject();
+//
+//            if (!string.IsNullOrWhiteSpace(accesToken.access_token)) {
+//                AuthorityModel model = new AuthorityModel() {
+//                    payload = jsonObject,
+//                    token = accesToken.access_token
+//                };
+//                var resut = await Auth(VerifyEnum.refreshToken, model);
+//                if (!resut.Status) {
+//                    return FaildAccessToken();
+//                }
+//
+//                accesToken.auth_token = StringCipher.Encrypt(resut.Data.verify_token);
+//
+//                return Ok(new ReturnDto() {
+//                    Data = accesToken,
+//                    ErrorData = null,
+//                    Status = true
+//                });
+//            }
+//            
+//                return Ok(new ReturnDto() {
+//                    Data = null,
+//                    ErrorData = null,
+//                    Status = false
+//                }); ;
+//        }
+
         [HttpPost("RefreshToken")]
         public async Task<IActionResult> RefreshToken(RefreshTokenDto refreshTokenDto) {
-
-            IEnumerable<KeyValuePair<string, string>> keyValuePairs = new Dictionary<string, string> {
-                            {"grant_type","refresh_token" },{"client_id","Authentication"},{"client_secret","clientsecret"},{"scope","api.sample offline_access"},{"refresh_token",refreshTokenDto.RefreshToken}
-                             };
-            var domin = ContextHelper.GetDomin();
-            AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
-
-            dynamic jsonObject = new JObject();
-
-            if (!string.IsNullOrWhiteSpace(accesToken.access_token)) {
-                AuthorityModel model = new AuthorityModel() {
-                    payload = jsonObject,
-                    token = accesToken.access_token
-                };
-                var resut = await Auth(VerifyEnum.refreshToken, model);
-                if (!resut.Status) {
-                    return FaildAccessToken();
-                }
-
-                accesToken.auth_token = StringCipher.Encrypt(resut.Data.verify_token);
-
-                return Ok(new ReturnDto() {
-                    Data = accesToken,
-                    ErrorData = null,
-                    Status = true
-                });
-            }
-            
-                return Ok(new ReturnDto() {
-                    Data = null,
-                    ErrorData = null,
-                    Status = false
-                }); ;
-        }
-
-        [HttpPost("RefreshTokenWithoutAuthToken")]
-        public async Task<IActionResult> RefreshTokenWithoutAuthToken(RefreshTokenDto refreshTokenDto) {
             IEnumerable<KeyValuePair<string, string>> keyValuePairs = new Dictionary<string, string> {
                             {"grant_type","refresh_token" },{"client_id","Authentication"},{"client_secret","clientsecret"},{"scope","api.sample offline_access"},{"refresh_token",refreshTokenDto.RefreshToken}
                              };
@@ -345,7 +348,7 @@ namespace Manex.Authentication.Controllers {
             string token = model.token;
 
             if (string.IsNullOrWhiteSpace(token)) {
-                token = JwtHelper.GenerateToken(new Claim[] { }, 660);
+                token = JwtHelper.GenerateToken(new Claim[] { }, _timeout * 3);
             }
 
             var principle = JwtHelper.GetClaimsPrincipal(token);
@@ -416,7 +419,7 @@ namespace Manex.Authentication.Controllers {
                              };
             var domin = ContextHelper.GetDomin();
             AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
-            accesToken.auth_token = StringCipher.Encrypt(verifyResult.Token);
+//            accesToken.auth_token = StringCipher.Encrypt(verifyResult.Token);
 
             return new ReturnDto() {
                 Data = accesToken,
