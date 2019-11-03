@@ -4,7 +4,6 @@
 <!--    <TargetFramework>netcoreapp2.2</TargetFramework>-->
 <!--    <AspNetCoreHostingModelV2>InProcess</AspNetCoreHostingModelV2>-->
       <TargetFramework>netcoreapp2.2</TargetFramework>
-      <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
       <RuntimeFrameworkVersion>2.2.0</RuntimeFrameworkVersion>
       <PlatformTarget>AnyCPU</PlatformTarget>
       <AspNetCoreHostingModelV2>InProcess</AspNetCoreHostingModelV2>

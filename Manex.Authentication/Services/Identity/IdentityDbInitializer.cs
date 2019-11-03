@@ -86,20 +86,28 @@ namespace Manex.Authentication.Services.Identity
                 using (var context = serviceScope.ServiceProvider.GetService<ApplicationDbContext>()) {
 
                     if (!context.Roles.Any()) {
-                        context.Add(new Role(ConstantRoles.Admin));
-                        context.SaveChanges();
+                        var adminRoleResult = _roleManager.CreateAsync(new Role(ConstantRoles.Admin)).Result;
+                        if (adminRoleResult == IdentityResult.Failed()) {
+                            _logger.LogError($"adminRole CreateAsync failed. {adminRoleResult.DumpErrors()}");
+                        }
                     }
                     if (!context.Roles.Any(x => x.Name == ConstantRoles.Admin)) {
-                        context.Add(new Role(ConstantRoles.Admin));
-                        context.SaveChanges();
+                        var adminRoleResult = _roleManager.CreateAsync(new Role(ConstantRoles.Admin)).Result;
+                        if (adminRoleResult == IdentityResult.Failed()) {
+                            _logger.LogError($"adminRole CreateAsync failed. {adminRoleResult.DumpErrors()}");
+                        }
                     }
                     if (!context.Roles.Any(x => x.Name == ConstantRoles.User)) {
-                        context.Add(new Role(ConstantRoles.User));
-                        context.SaveChanges();
+                        var adminRoleResult = _roleManager.CreateAsync(new Role(ConstantRoles.User)).Result;
+                        if (adminRoleResult == IdentityResult.Failed()) {
+                            _logger.LogError($"userRole CreateAsync failed. {adminRoleResult.DumpErrors()}");
+                        }
                     }
                     if (!context.Roles.Any(x => x.Name == ConstantRoles.Partner)) {
-                        context.Add(new Role(ConstantRoles.Partner));
-                        context.SaveChanges();
+                        var adminRoleResult = _roleManager.CreateAsync(new Role(ConstantRoles.Partner)).Result;
+                        if (adminRoleResult == IdentityResult.Failed()) {
+                            _logger.LogError($"partnerRole CreateAsync failed. {adminRoleResult.DumpErrors()}");
+                        }
                     }
                 }
 
