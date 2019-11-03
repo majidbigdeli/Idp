@@ -353,9 +353,9 @@ namespace Manex.Authentication.Controllers {
 
             var principle = JwtHelper.GetClaimsPrincipal(token);
 
-            if (principle?.Identity?.IsAuthenticated == true) {
+            if (principle?.Identity is ClaimsIdentity claimsIdentity && claimsIdentity.IsAuthenticated) {
                 try {
-                    var claimsIdentity = principle.Identity as ClaimsIdentity;
+//                    var claimsIdentity = principle.Identity as ClaimsIdentity;
                     var verifyResult = _issuers["owner"].Verify(authority, claimsIdentity.Claims.ToArray(), model.payload);
 
                     ret = await ResultFactory(authority, verifyResult);
