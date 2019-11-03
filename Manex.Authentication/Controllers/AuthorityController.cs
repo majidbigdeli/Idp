@@ -444,10 +444,14 @@ namespace Manex.Authentication.Controllers {
            
                 switch (key) {
                     case Gp_Error.IdentityResultFaild:
-                        var statusMessage = exc.Data[key] as List<IdentityError>;
+                        if (exc.Data.Contains(key)) {
 
-                        foreach (var item in statusMessage) {
-                            errorData.Add(new ErrorDto() {Description = item.Description, Key = item.Code});
+                            var statusMessage = exc.Data[key] as List<IdentityError>;
+
+                            if (statusMessage != null)
+                                foreach (var item in statusMessage) {
+                                    errorData.Add(new ErrorDto() {Description = item.Description, Key = item.Code});
+                                }
                         }
 
                         break;
