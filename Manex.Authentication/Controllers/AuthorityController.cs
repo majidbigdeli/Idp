@@ -441,24 +441,23 @@ namespace Manex.Authentication.Controllers {
             var key = exc.Data.Keys.Cast<Gp_Error>().FirstOrDefault();
             List<ErrorDto> errorData = new List<ErrorDto>();
 
-            switch (key) {
-                case Gp_Error.IdentityResultFaild:
-                    var statusMessage = exc.Data[key] as List<IdentityError>;
-                    foreach (var item in statusMessage) {
-                        errorData.Add(new ErrorDto() {
-                            Description = item.Description,
-                            Key = item.Code
-                        });
-                    }
-                    break;
-                case Gp_Error.Unknown:
-                default:
-                    errorData.Add(new ErrorDto() {
-                        Description = exc.Message,
-                        Key = nameof(ErrorKey.Unknown)
-                    });
-                    break;
-            }
+           
+                switch (key) {
+                    case Gp_Error.IdentityResultFaild:
+                        var statusMessage = exc.Data[key] as List<IdentityError>;
+
+                        foreach (var item in statusMessage) {
+                            errorData.Add(new ErrorDto() {Description = item.Description, Key = item.Code});
+                        }
+
+                        break;
+                    case Gp_Error.Unknown:
+                    default:
+                        errorData.Add(new ErrorDto() {Description = exc.Message, Key = nameof(ErrorKey.Unknown)});
+
+                        break;
+                }
+            
 
             @ret = new ReturnDto() {
                 Data = null,
