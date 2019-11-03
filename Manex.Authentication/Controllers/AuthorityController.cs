@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -33,9 +34,12 @@ namespace Manex.Authentication.Controllers {
         private readonly IApplicationUserManager _applicationUserManager;
         private readonly IApplicationRoleManager _applicationRoleManager;
         private readonly int _timeout;
+        private readonly Uri baseUrl;
 
         private Dictionary<string, AuthorityIssuer> _issuers;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        
+         
 
         public AuthorityController(IApplicationUserManager applicationUserManager,
             IApplicationSignInManager applicationSignInManager,
@@ -45,6 +49,7 @@ namespace Manex.Authentication.Controllers {
             _applicationUserManager = applicationUserManager;
             _applicationRoleManager = applicationRoleManager;
             _httpContextAccessor = httpContextAccessor;
+            baseUrl = new Uri(configuration.GetSection("Authority").Value);
 
             _issuers = new Dictionary<string, AuthorityIssuer>()
             {
@@ -59,6 +64,8 @@ namespace Manex.Authentication.Controllers {
                 }
             };
         }
+
+        
 
 
         #region OtpLogin
@@ -305,8 +312,8 @@ namespace Manex.Authentication.Controllers {
             IEnumerable<KeyValuePair<string, string>> keyValuePairs = new Dictionary<string, string> {
                             {"grant_type","refresh_token" },{"client_id","Authentication"},{"client_secret","clientsecret"},{"scope","api.sample offline_access"},{"refresh_token",refreshTokenDto.RefreshToken}
                              };
-            var domin = ContextHelper.GetDomin(_httpContextAccessor);
-            AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
+            var url = new Uri(baseUrl, "/connect/token");
+            AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>(url.ToString(), keyValuePairs);
 
             if (!string.IsNullOrWhiteSpace(accesToken.access_token)) {
                 return Ok(new ReturnDto() {
@@ -426,11 +433,9 @@ namespace Manex.Authentication.Controllers {
                             {"scope","api.sample offline_access"},
                             {"auth_token",verifyResult.Token}
                              };
-            var domin = ContextHelper.GetDomin(_httpContextAccessor);
-            Console.WriteLine("Domain = " + domin);
-            Console.WriteLine("Domain Absolute Path = " + domin.AbsoluteUri);
-            AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
-//            accesToken.auth_token = StringCipher.Encrypt(verifyResult.Token);
+            var url = new Uri(baseUrl, "/connect/token");
+            AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>(url.ToString(), keyValuePairs);
+           // accesToken.auth_token = verifyResult.Token;
 
             return new ReturnDto() {
                 Data = accesToken,
