@@ -1,5 +1,6 @@
 using Manex.Authentication.Contracts.Identity;
 using Manex.Authentication.Entities.Identity;
+using Manex.Authentication.Services.Identity;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,7 @@ namespace Manex.Authentication.Factory {
         }
         public async Task<IdentityResult> Register()
         {
+
             var user = new User
             {
                 UserName = _user.Phone,
@@ -36,14 +38,20 @@ namespace Manex.Authentication.Factory {
             };
             var res = await _applicationUserManager.CreateAsync(user, _user.Password);
 
-            var role = await _applicationRoleManager.FindByNameAsync("User");
-            var listRoleId = new List<long>();
-            listRoleId.Add(role.Id);
-            await _applicationUserManager.SetUserRole(user.Id, listRoleId);
-            
-            
+            if (!res.Succeeded) {
+                Exception ex = new Exception();
+                ex.Data.Add(Gp_Error.IdentityResultFaild, res.Errors.ToList());
+                throw ex;
+            }
 
-            return res;
+            var addToRoleResult = await _applicationUserManager.AddToRoleAsync(user, ConstantRoles.User);
+            if (!addToRoleResult.Succeeded) {
+                Exception ex = new Exception();
+                ex.Data.Add(Gp_Error.IdentityResultFaild, addToRoleResult.Errors.ToList());
+                throw ex;
+            }
+
+            return IdentityResult.Success;
         }
     }
 
@@ -67,13 +75,21 @@ namespace Manex.Authentication.Factory {
                 IsActive = true
             };
             var result = await _applicationUserManager.CreateUserAsync(user);
-            
-            var role = await _applicationRoleManager.FindByNameAsync("User");
-            var listRoleId = new List<long>();
-            listRoleId.Add(role.Id);
-            await _applicationUserManager.SetUserRole(user.Id, listRoleId);
 
-            return result;
+            if (!result.Succeeded) {
+                Exception ex = new Exception();
+                ex.Data.Add(Gp_Error.IdentityResultFaild, result.Errors.ToList());
+                throw ex;
+            }
+
+            var addToRoleResult = await _applicationUserManager.AddToRoleAsync(user, ConstantRoles.User);
+            if (!addToRoleResult.Succeeded) {
+                Exception ex = new Exception();
+                ex.Data.Add(Gp_Error.IdentityResultFaild, addToRoleResult.Errors.ToList());
+                throw ex;
+            }
+
+            return IdentityResult.Success;
         }
     }
 

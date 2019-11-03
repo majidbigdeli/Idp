@@ -233,39 +233,41 @@ namespace Manex.Authentication.Controllers {
         [HttpPost("Register")]
         public async Task<IActionResult> Register(RegisterUserDto registerUserDto) {
 
-            IRegisterUserFactory factory;
-            IdentityResult result = new IdentityResult();
-            switch (string.IsNullOrWhiteSpace(registerUserDto.Password)) {
-                case true:
-                    factory = new RegisterUserWithoutPasswordFactory().Create(registerUserDto, _applicationUserManager,_applicationRoleManager);
-                    result = await factory.Register();
-                    break;
-                case false:
-                    factory = new RegisterUserWithPasswordFactory().Create(registerUserDto, _applicationUserManager,_applicationRoleManager);
-                    result = await factory.Register();
-                    break;
-            }
-
-            if (!result.Succeeded) {
-                List<ErrorDto> errorDto = new List<ErrorDto>();
-                foreach (var item in result.Errors.ToList()) {
-                    errorDto.Add(new ErrorDto() {
-                        Description = item.Description,
-                        Key = item.Code
+            try {
+                if (_applicationUserManager.FindByNameAsync(registerUserDto.Phone) != null) {
+                    Exception ex = new Exception();
+                    List<IdentityError> errors = new List<IdentityError>();
+                    errors.Add(new IdentityError {
+                        Code = nameof(ErrorKey.UserNameRepeat),
+                        Description = ErrorKey.UserNameRepeat
                     });
+                    ex.Data.Add(Gp_Error.IdentityResultFaild, errors);
+                    throw ex;
                 }
-                return Ok(new ReturnDto() {
+                IRegisterUserFactory factory;
+                IdentityResult result = new IdentityResult();
+                switch (string.IsNullOrWhiteSpace(registerUserDto.Password)) {
+                    case true:
+                        factory = new RegisterUserWithoutPasswordFactory().Create(registerUserDto, _applicationUserManager, _applicationRoleManager);
+                        result = await factory.Register();
+                        break;
+                    case false:
+                        factory = new RegisterUserWithPasswordFactory().Create(registerUserDto, _applicationUserManager, _applicationRoleManager);
+                        result = await factory.Register();
+                        break;
+                }
+
+                   return Ok(new ReturnDto() {
                     Data = null,
-                    ErrorData = errorDto,
-                    Status = false
+                    ErrorData = null,
+                    Status = true
                 });
+            } catch (Exception ex) {
+                var ret = ExceptionReturn(ex);
+                return Ok(ret);
+       
             }
 
-            return Ok(new ReturnDto() {
-                Data = null,
-                ErrorData = null,
-                Status = true
-            });
         }
         #endregion
 
@@ -453,16 +455,7 @@ namespace Manex.Authentication.Controllers {
         }
 
         private static ReturnDto ExceptionReturn(Exception exc) {
-            return new ReturnDto() {
-                Data = null,
-                ErrorData = new List<ErrorDto>(new[] {
-                    new ErrorDto() {
-                        Description =
-                            exc?.Message
-                    },
-                }),
-                Status = false
-            };
+
             ReturnDto ret;
             var key = exc.Data.Keys.Cast<Gp_Error>().FirstOrDefault();
             List<ErrorDto> errorData = new List<ErrorDto>();
@@ -489,7 +482,7 @@ namespace Manex.Authentication.Controllers {
                 }
             
 
-            @ret = new ReturnDto() {
+            ret = new ReturnDto() {
                 Data = null,
                 ErrorData = errorData,
                 Status = false

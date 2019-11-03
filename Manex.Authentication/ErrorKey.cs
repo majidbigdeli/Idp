@@ -8,6 +8,7 @@ namespace Manex.Authentication {
         public const string FaildAccessToken = "مشکل در ایجاد توکن";
         public const string AuthroizeFaild = "هدر Authroize اشتباه میباشد";
         public const string Unknown = "خطای ناشناخته";
+        public const string UserNameRepeat = "شماره موبایل قبلا ثبت شده است";
     }
 
     public enum Gp_Error {

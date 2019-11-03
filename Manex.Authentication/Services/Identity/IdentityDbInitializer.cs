@@ -81,20 +81,32 @@ namespace Manex.Authentication.Services.Identity
             using (var serviceScope = _scopeFactory.CreateScope())
             {
                 var identityDbSeedData = serviceScope.ServiceProvider.GetService<IIdentityDbInitializer>();
+
+                // How to add initial data to the DB directly
+                using (var context = serviceScope.ServiceProvider.GetService<ApplicationDbContext>()) {
+
+                    if (!context.Roles.Any()) {
+                        context.Add(new Role(ConstantRoles.Admin));
+                        context.SaveChanges();
+                    }
+                    if (!context.Roles.Any(x => x.Name == ConstantRoles.Admin)) {
+                        context.Add(new Role(ConstantRoles.Admin));
+                        context.SaveChanges();
+                    }
+                    if (!context.Roles.Any(x => x.Name == ConstantRoles.User)) {
+                        context.Add(new Role(ConstantRoles.User));
+                        context.SaveChanges();
+                    }
+                    if (!context.Roles.Any(x => x.Name == ConstantRoles.Partner)) {
+                        context.Add(new Role(ConstantRoles.Partner));
+                        context.SaveChanges();
+                    }
+                }
+
                 var result = identityDbSeedData.SeedDatabaseWithAdminUserAsync().Result;
                 if (result == IdentityResult.Failed())
                 {
                     throw new InvalidOperationException(result.DumpErrors());
-                }
-
-                // How to add initial data to the DB directly
-                using (var context = serviceScope.ServiceProvider.GetService<ApplicationDbContext>())
-                {
-                    if (!context.Roles.Any())
-                    {
-                        context.Add(new Role(ConstantRoles.Admin));
-                        context.SaveChanges();
-                    }
                 }
             }
         }
