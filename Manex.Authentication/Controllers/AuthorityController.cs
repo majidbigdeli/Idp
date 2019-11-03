@@ -437,6 +437,16 @@ namespace Manex.Authentication.Controllers {
         }
 
         private static ReturnDto ExceptionReturn(Exception exc) {
+            return new ReturnDto() {
+                Data = null,
+                ErrorData = new List<ErrorDto>(new[] {
+                    new ErrorDto() {
+                        Description =
+                            exc?.Message
+                    },
+                }),
+                Status = false
+            };
             ReturnDto ret;
             var key = exc.Data.Keys.Cast<Gp_Error>().FirstOrDefault();
             List<ErrorDto> errorData = new List<ErrorDto>();
