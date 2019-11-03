@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 
+using Microsoft.AspNetCore.Http.Extensions;
+
 namespace WebIddentityServer4.Helpers {
     public static class ContextHelper {
 
@@ -17,13 +19,17 @@ namespace WebIddentityServer4.Helpers {
             return uriBuilder.Uri;
         }
 
-        public static Uri GetDomin() {
-            var _contextAccessor = new HttpContextAccessor();
+        public static Uri GetDomin(IHttpContextAccessor httpContextAccessor) {
+            Console.WriteLine("httpContextAccessor = " + httpContextAccessor);
+            var _contextAccessor = httpContextAccessor ?? new HttpContextAccessor();
             var request = _contextAccessor.HttpContext.Request;
+            Console.WriteLine("Reuest: " + request.GetDisplayUrl());
+            var uri = new Uri(request.GetDisplayUrl());
             UriBuilder uriBuilder = new UriBuilder();
-            uriBuilder.Host = request.Host.Host;
-            uriBuilder.Port = request.Host.Port.Value;
-
+            uriBuilder.Host = uri.Host;
+            uriBuilder.Port = uri.Port;
+            uriBuilder.Scheme = uri.Scheme;
+            Console.WriteLine("URI = " + uriBuilder.Uri);
             return uriBuilder.Uri;
 
 

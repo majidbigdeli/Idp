@@ -13,6 +13,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+
+using Microsoft.AspNetCore.Http;
+
 using WebIddentityServer4.Authorities;
 using WebIddentityServer4.Helpers;
 
@@ -32,14 +35,17 @@ namespace Manex.Authentication.Controllers {
         private readonly int _timeout;
 
         private Dictionary<string, AuthorityIssuer> _issuers;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthorityController(IApplicationUserManager applicationUserManager,
             IApplicationSignInManager applicationSignInManager,
             IApplicationRoleManager applicationRoleManager,
-            ILogger<AuthorityController> logger, IConfiguration configuration) {
+            ILogger<AuthorityController> logger, IConfiguration configuration, IHttpContextAccessor httpContextAccessor) {
              _timeout = configuration.GetValue<int>("Expire:VerifyNumberLifeTime");
             _applicationUserManager = applicationUserManager;
             _applicationRoleManager = applicationRoleManager;
+            _httpContextAccessor = httpContextAccessor;
+
             _issuers = new Dictionary<string, AuthorityIssuer>()
             {
                 {
@@ -299,7 +305,7 @@ namespace Manex.Authentication.Controllers {
             IEnumerable<KeyValuePair<string, string>> keyValuePairs = new Dictionary<string, string> {
                             {"grant_type","refresh_token" },{"client_id","Authentication"},{"client_secret","clientsecret"},{"scope","api.sample offline_access"},{"refresh_token",refreshTokenDto.RefreshToken}
                              };
-            var domin = ContextHelper.GetDomin();
+            var domin = ContextHelper.GetDomin(_httpContextAccessor);
             AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
 
             if (!string.IsNullOrWhiteSpace(accesToken.access_token)) {
@@ -357,8 +363,7 @@ namespace Manex.Authentication.Controllers {
                 try {
 //                    var claimsIdentity = principle.Identity as ClaimsIdentity;
                     var verifyResult = _issuers["owner"].Verify(authority, claimsIdentity.Claims.ToArray(), model.payload);
-
-                    ret = await ResultFactory(authority, verifyResult);
+                   ret = await ResultFactory(authority, verifyResult);
                     return ret;
 
                 } catch (Exception exc) {
@@ -413,11 +418,17 @@ namespace Manex.Authentication.Controllers {
             return ret;
         }
 
-        private static async Task<ReturnDto> OtpAndUserResult(IssuerVerifyResult verifyResult) {
+        private async Task<ReturnDto> OtpAndUserResult(IssuerVerifyResult verifyResult) {
             IEnumerable<KeyValuePair<string, string>> keyValuePairs = new Dictionary<string, string> {
-                            {"grant_type","authentication" },{"client_id","Authentication"},{"client_secret","clientsecret"},{"scope","api.sample offline_access"},{"auth_token",verifyResult.Token}
+                            {"grant_type","authentication" },
+                            {"client_id","Authentication"},
+                            {"client_secret","clientsecret"},
+                            {"scope","api.sample offline_access"},
+                            {"auth_token",verifyResult.Token}
                              };
-            var domin = ContextHelper.GetDomin();
+            var domin = ContextHelper.GetDomin(_httpContextAccessor);
+            Console.WriteLine("Domain = " + domin);
+            Console.WriteLine("Domain Absolute Path = " + domin.AbsoluteUri);
             AccesToken accesToken = await HttpClientHelper.PostFormUrlEncoded<AccesToken>($"{domin.AbsoluteUri}connect/token", keyValuePairs);
 //            accesToken.auth_token = StringCipher.Encrypt(verifyResult.Token);
 
@@ -431,7 +442,7 @@ namespace Manex.Authentication.Controllers {
         private ReturnDto AccountResult(IssuerVerifyResult verifyResult) {
             return new ReturnDto() {
                 Data = new { verify_token = verifyResult.Token },
-                ErrorData = null,
+                ErrorData = new List<ErrorDto>(),
                 Status = true
             };
         }
