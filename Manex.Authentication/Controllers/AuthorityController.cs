@@ -234,7 +234,7 @@ namespace Manex.Authentication.Controllers {
         public async Task<IActionResult> Register(RegisterUserDto registerUserDto) {
 
             try {
-                if (_applicationUserManager.FindByNameAsync(registerUserDto.Phone) != null) {
+                if (await _applicationUserManager.FindByNameAsync(registerUserDto.Phone) != null) {
                     Exception ex = new Exception();
                     List<IdentityError> errors = new List<IdentityError>();
                     errors.Add(new IdentityError {

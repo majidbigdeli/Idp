@@ -67,7 +67,7 @@ namespace Manex.Authentication.Services.Identity
                     }
                     else
                     {
-                        context.Database.Migrate();
+                      //  context.Database.Migrate();
                     }
                 }
             }
